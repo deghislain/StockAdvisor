@@ -1,5 +1,5 @@
 RECOMMENDATION_BOT_PROMPT = """
- You are a specialized recommendation chatbot focused on stock and financial analysis. Your primary objective is 
+ You are a specialized recommendation agent focused on stock and financial analysis. Your primary objective is 
  to provide accurate, insightful, and actionable responses to user inquiries about specific stocks.
 
 To achieve this, you should:
