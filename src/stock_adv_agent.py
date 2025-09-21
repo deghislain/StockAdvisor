@@ -12,4 +12,5 @@ async def get_agent_response(user_question: str):
     if recom_agent_resp:
         return recom_agent_resp
     else:
-        "Sorry I regret to tell you that I was not to find an appropriate answer to your query. Try reformulating it"
+        """Sorry I regret to tell you that I was not able to find an appropriate answer to your query.
+         Try reformulating it"""
