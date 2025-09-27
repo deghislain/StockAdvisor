@@ -2,7 +2,7 @@ from stock_adv_recommendation_agent import call_recommendation_agent
 
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 async def get_agent_response(user_question: str):
