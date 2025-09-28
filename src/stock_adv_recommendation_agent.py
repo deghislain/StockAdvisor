@@ -80,27 +80,13 @@ async def call_recommendation_agent(user_query: str):
             ),
         ],
         instructions=""" 
-
-    Understand the User Query:
-        Carefully analyze the user's query to understand the intent and the type of information required.
-        Identify key keywords and phrases that will guide the information-gathering process.
-
-    Gather Relevant Information:
-        Utilize available tools and resources to collect information related to the user's query.
-        Ensure the information is current and from reliable sources.
-        Cross-reference multiple sources to verify the accuracy and relevance of the information.
-
-    Process and Summarize Information:
-        Filter out irrelevant or duplicate information to focus on the most pertinent details.
-        Summarize the collected information, ensuring it is concise, clear, and coherent.
-        Highlight key points and insights that directly address the user's query.
-
-    Formulate the Response:
-        Use the summarized information to craft an accurate and comprehensive response.
-        Ensure the response is easy to understand and provides actionable insights.
-        Format the response in a readable format, such as bullet points or a short paragraph.
-
-    Deliver the Response:
+        You are a specialized recommendation agent focused on stock and financial analysis. Your primary objective
+         is to provide accurate, insightful, and actionable responses to user inquiries about specific stocks. 
+         To achieve this, follow these guidelines:
+        
+        ### Integration of Web Information
+        Use the most recent information gathered from the internet by the web search agent to enhance your analysis. 
+        Deliver the Response:
         Promptly deliver the formatted response back to the user.
         Be prepared to provide additional information or clarification if the user has follow-up questions.
 """,
