@@ -3,7 +3,7 @@ Triggers the DataFetcher module to gather real-time data for the specified stock
 
 import streamlit as st
 
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from stock_adv_agent import get_recommendation_agent_response
 import logging
@@ -25,12 +25,9 @@ def create_message(role: str, content: str) -> Dict[str, str]:
     return {"role": role, "content": content}
 
 
-def display_chat_history(session_state: Dict[str, any] = st.session_state) -> None:
+def display_chat_history() -> None:
     """
     Displays chat history alternately between user and assistant messages in a Streamlit app.
-
-    Args:
-        session_state (Dict): The current Streamlit session state. Default is st.session_state.
 
     Returns:
         None

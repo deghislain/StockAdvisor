@@ -54,7 +54,8 @@ async def call_recommendation_agent(user_query: str):
                                         Covers all key points from the scraped content.
                                         Maintains clarity and coherence.
                                     For each scraped page, create a brief summary that captures the essential information.
-                                    Combine these individual summaries into an overall summary that provides a comprehensive overview of the search results.
+                                    Combine these individual summaries into an overall summary that provides a comprehensive 
+                                    overview of the search results.
                             
                                 Return Results to User:
                                     Format the summarized information into a readable format, such as:

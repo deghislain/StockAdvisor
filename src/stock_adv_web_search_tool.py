@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 import asyncio
 from pydantic import BaseModel, Field
 from beeai_framework.tools import StringToolOutput, Tool, ToolRunOptions
@@ -19,12 +19,16 @@ class WebSearchToolInput(BaseModel):
 
 class WebSearchTool(Tool[WebSearchToolInput, ToolRunOptions, StringToolOutput]):
     name = "websearcher"
-    description = """This tool is designed to search for and retrieve online trends, news, current events, real-time information, or research topics. It has the capability to scrape the content of URLs within the search results, allowing for in-depth analysis and summarization of the information found.
+    description = """This tool is designed to search for and retrieve online trends, news, current events, 
+    real-time information, or research topics. It has the capability to scrape the content of URLs within 
+    the search results, allowing for in-depth analysis and summarization of the information found.
 
     Key Features:
     
-        Search Capabilities: Perform searches across a wide range of topics, including trends, news, current events, real-time information, and research topics.
-        Content Scraping: Extract and scrape the content from URLs within the search results, enabling detailed examination of the information.
+        Search Capabilities: Perform searches across a wide range of topics, including trends, news, current events, 
+        real-time information, and research topics.
+        Content Scraping: Extract and scrape the content from URLs within the search results, enabling detailed 
+        examination of the information.
         Real-Time Data: Access up-to-date information to ensure the most current and relevant data is retrieved.
         Comprehensive Results: Retrieve a broad spectrum of results to provide a thorough understanding of the search query.
 
