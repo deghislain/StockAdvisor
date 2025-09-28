@@ -5,7 +5,7 @@ import streamlit as st
 
 from typing import List, Dict, Any
 
-from stock_adv_agent import get_agent_response
+from stock_adv_agent import get_recommendation_agent_response
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -103,9 +103,9 @@ async def create_interface():
             generate_report(user_stock)
             user_question = get_user_questions()
             if user_question:
-                bot_response = await get_agent_response(user_question)
-                if bot_response:
-                    update_chat_history(user_question, bot_response)
+                agent_response = await get_recommendation_agent_response(user_question)
+                if agent_response:
+                    update_chat_history(user_question, agent_response)
             display_chat_history()
         else:
             st.write("Enter a stock symbol please")

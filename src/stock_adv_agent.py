@@ -5,8 +5,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-async def get_agent_response(user_question: str):
-    logging.info(f"call_recommendation_bot ************************************* START with input {user_question}")
+async def get_recommendation_agent_response(user_question: str):
+    logging.info(f"call_recommendation_agent ************************************* START with input {user_question}")
     recom_agent_resp = await call_recommendation_agent(user_question)
 
     if recom_agent_resp:
