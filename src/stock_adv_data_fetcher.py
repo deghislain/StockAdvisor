@@ -10,14 +10,22 @@ from beeai_framework.tools import StringToolOutput, Tool, ToolRunOptions
 from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
 import asyncio
-
+from enum import Enum
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+class DataType(str, Enum):
+    """The type of data being fetched: Fundamental(FD), Technical(TD), Non Financial(NFD)"""
+    FD = "FD"
+    NFD = "NFD"
+    TD = "TD"
+
+
 class DataFetcherToolInput(BaseModel):
     stock_symbol: str = Field(description="Stock symbol of the data to retrieve.")
+    data_type: DataType = Field(description="The type of data being fetched. eg fundamental data")
 
 
 class DataFetcherToolResult(SearchToolResult):
@@ -70,15 +78,19 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             options: ToolRunOptions | None,
             context: RunContext,
     ) -> DataFetcherToolOutput:
-        fundamental_data = self._get_fundamental_data(input)
+        output = None
+        if input.data_type.value == DataType.FD.value:
+            fundamental_data = self._get_fundamental_data(input)
+            if fundamental_data:
+                output = DataFetcherToolOutput(results=[fundamental_data])
 
-        return DataFetcherToolOutput(results=[fundamental_data])
+        return output
 
 
 async def main() -> None:
     tool = DataFetcherTool()
     stock_symbol = "IBM"
-    input = DataFetcherToolInput(stock_symbol=stock_symbol)
+    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=DataType.TD)
     data = await tool.run(input)
     logging.info(f"///////////////////////////////{data}")
 
