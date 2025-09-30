@@ -35,6 +35,7 @@ class DataFetcherToolResult(SearchToolResult):
     income_statement: Optional[DataFrame] = None
     balance_sheet: Optional[DataFrame] = None
     cash_flow: Optional[DataFrame] = None
+    additional_info: Optional[DataFrame] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
@@ -54,13 +55,16 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             creator=self,
         )
 
-    def _get_fundamental_data(self, input: DataFetcherToolInput):
+    def _get_fundamental_data(self, input: DataFetcherToolInput) -> DataFetcherToolResult:
+        logging.info(f"_get_fundamental_data START with input {input}")
         stock_symbol = yf.Ticker(input.stock_symbol)
 
         # yfinance may return `None` if a particular statement is unavailable
         income_statement = getattr(stock_symbol, "income_stmt", None)
         balance_sheet = getattr(stock_symbol, "balance_sheet", None)
         cash_flow = getattr(stock_symbol, "cash_flow", None)
+        info = yf.Ticker(input.stock_symbol).info
+        additional_info = DataFrame([info])
 
         result = DataFetcherToolResult(
             title=f"Financial statements for {input.stock_symbol}",
@@ -69,8 +73,11 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             income_statement=income_statement,
             balance_sheet=balance_sheet,
             cash_flow=cash_flow,
+            additional_info=additional_info
         )
         return result
+
+    #def _get_technical_data(self, stock_symbol: str, start_date: str, end_date : str)-> DataFetcherToolResult:
 
     async def _run(
             self,
@@ -90,7 +97,7 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
 async def main() -> None:
     tool = DataFetcherTool()
     stock_symbol = "IBM"
-    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=DataType.TD)
+    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=DataType.FD)
     data = await tool.run(input)
     logging.info(f"///////////////////////////////{data}")
 
