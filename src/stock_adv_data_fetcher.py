@@ -1,105 +1,102 @@
 """Responsible for gathering stock data from various sources.The DataFetcher collects data from various sources,
 including stock exchanges, financial news websites, and historical databases"""
-from pandas import DataFrame
-import yfinance as yf
-from pydantic import BaseModel, Field, ConfigDict
-
-from typing import Any, Optional
-from beeai_framework.emitter import Emitter
-from beeai_framework.tools import StringToolOutput, Tool, ToolRunOptions
-from beeai_framework.context import RunContext
-from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
+from beeai_framework.agents.experimental import RequirementAgent
+from beeai_framework.agents.experimental.requirements.conditional import ConditionalRequirement
+from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
+from beeai_framework.tools.think import ThinkTool
+from stock_adv_data_fetcher_tool import DataFetcherTool
+from beeai_framework.backend import ChatModel
+from beeai_framework.tools.handoff import HandoffTool
+from beeai_framework.errors import FrameworkError
+from beeai_framework.tools import Tool
+from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
 import asyncio
-from enum import Enum
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-class DataType(str, Enum):
-    """The type of data being fetched: Fundamental(FD), Technical(TD), Non Financial(NFD)"""
-    FD = "FD"
-    NFD = "NFD"
-    TD = "TD"
+async def fetch_data(stock_symbol: str):
+    data_fetcher_agent = RequirementAgent(
+        name="DataFetchAgent",
+        llm=ChatModel.from_name(SMALL_MODEL),
+        tools=[
+            ThinkTool(),  # to reason
+            DataFetcherTool()
+        ],
+        instructions=""" 
+        You are an AI agent tasked with retrieving financial data essential for stock investors from Yahoo Finance. Please follow these guidelines to ensure thorough and accurate data retrieval:
+    Data Retrieval Procedure
+
+    Fetch the Data
+        Use the DataFetcherTool to obtain financial data based on the provided stock symbol.
+
+    Data Retrieval Sequence
+
+        Income Statement: Collect the following metrics:
+            Net Income
+            Earnings per Share (EPS)
+            Total Revenues
+            Total Expenses
+            Gross Profit Margin
+            Operating Income (EBIT)
+            Operating Cash Flow
+
+        Balance Sheet: Gather the following data points:
+            Total Assets
+            Current Liabilities
+            Long-Term Debt
+            Total Liabilities
+            Shareholders’ Equity
+
+        Cash Flow Statement: Retrieve these key ratios:
+            Debt-to-Equity Ratio
+            Current Ratio
+            Return on Equity (ROE)
+
+        Additional information: Provide any extra relevant information that aids in fundamental analysis.
+
+    Finalize Your Response
+        Ensure that all the listed metrics and data points are included in your final response.
+        Verify the completeness of the information, ensuring no critical details are omitted.
+
+By adhering to this structured approach, you will deliver valuable and comprehensive data for stock investors.
+
+        """,
+        requirements=[
+            ConditionalRequirement(ThinkTool, force_at_step=1),
+            ConditionalRequirement(DataFetcherTool, min_invocations=1),
+        ]
+    )
+    main_agent = RequirementAgent(
+        name="MainAgent",
+        llm=ChatModel.from_name(SMALL_MODEL),
+        tools=[
+            ThinkTool(),
+            HandoffTool(
+                data_fetcher_agent,
+                name="DataFetchAgent",
+                description="Consult the data fetcher Agent when ask to fetch data about a provided stock.",
+            ),
+
+        ],
+        requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+        # Log all tool calls to the console for easier debugging
+        middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
+    )
+    agent_response = ""
+    try:
+        user_query = f"Fetch the data for this stock: {stock_symbol}."
+        response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
+        agent_response = response.state.answer.text
+        logging.info(f"*****************************fetch_data END with output: {agent_response}")
+    except FrameworkError as err:
+        logging.error(f"Error: {err.explain()}")
+    return agent_response
 
 
-class DataFetcherToolInput(BaseModel):
-    stock_symbol: str = Field(description="Stock symbol of the data to retrieve.")
-    data_type: DataType = Field(description="The type of data being fetched. eg fundamental data")
-
-
-class DataFetcherToolResult(SearchToolResult):
-    title: str
-    description: str
-    url: str
-    income_statement: Optional[DataFrame] = None
-    balance_sheet: Optional[DataFrame] = None
-    cash_flow: Optional[DataFrame] = None
-    additional_info: Optional[DataFrame] = None
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class DataFetcherToolOutput(SearchToolOutput):
-    pass
-
-
-class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherToolOutput]):
-    name = "DataFetcher"
-    description = """This tool retrieves data from specialized websites based on a given stock symbol,
-     providing users with up-to-date financial information and insights"""
-    input_schema = DataFetcherToolInput
-
-    def _create_emitter(self) -> Emitter:
-        return Emitter.root().child(
-            namespace=["tool", "data_fetcher", "DataFetcher"],
-            creator=self,
-        )
-
-    def _get_fundamental_data(self, input: DataFetcherToolInput) -> DataFetcherToolResult:
-        logging.info(f"_get_fundamental_data START with input {input}")
-        stock_symbol = yf.Ticker(input.stock_symbol)
-
-        # yfinance may return `None` if a particular statement is unavailable
-        income_statement = getattr(stock_symbol, "income_stmt", None)
-        balance_sheet = getattr(stock_symbol, "balance_sheet", None)
-        cash_flow = getattr(stock_symbol, "cash_flow", None)
-        info = yf.Ticker(input.stock_symbol).info
-        additional_info = DataFrame([info])
-
-        result = DataFetcherToolResult(
-            title=f"Financial statements for {input.stock_symbol}",
-            description="Income statement, balance sheet and cash‑flow data fetched via yfinance.",
-            url=f"https://finance.yahoo.com/quote/{input.stock_symbol}",
-            income_statement=income_statement,
-            balance_sheet=balance_sheet,
-            cash_flow=cash_flow,
-            additional_info=additional_info
-        )
-        return result
-
-    #def _get_technical_data(self, stock_symbol: str, start_date: str, end_date : str)-> DataFetcherToolResult:
-
-    async def _run(
-            self,
-            input: DataFetcherToolInput,
-            options: ToolRunOptions | None,
-            context: RunContext,
-    ) -> DataFetcherToolOutput:
-        output = None
-        if input.data_type.value == DataType.FD.value:
-            fundamental_data = self._get_fundamental_data(input)
-            if fundamental_data:
-                output = DataFetcherToolOutput(results=[fundamental_data])
-
-        return output
-
-
-async def main() -> None:
-    tool = DataFetcherTool()
-    stock_symbol = "IBM"
-    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=DataType.FD)
-    data = await tool.run(input)
-    logging.info(f"///////////////////////////////{data}")
+async def main():
+    await fetch_data("IBM")
 
 
 if __name__ == "__main__":

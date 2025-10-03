@@ -30,7 +30,7 @@ async def call_recommendation_agent(user_query: str):
             str: A helpful and clear response containing the recommendation.
         """
 
-    recom_agent_resp = ""
+
     web_search_agent = RequirementAgent(
         name="WebSearchAgent",
         llm=ChatModel.from_name(SMALL_MODEL),
@@ -95,7 +95,7 @@ async def call_recommendation_agent(user_query: str):
         # Log all tool calls to the console for easier debugging
         middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
     )
-
+    recom_agent_resp = ""
     try:
         response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
         recom_agent_resp = response.state.answer.text
