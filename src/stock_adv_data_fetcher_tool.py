@@ -2,19 +2,27 @@ from pandas import DataFrame
 import yfinance as yf
 from pydantic import BaseModel, Field, ConfigDict
 
-from typing import  Optional
+from typing import Optional
 from beeai_framework.emitter import Emitter
 from beeai_framework.tools import Tool, ToolRunOptions
 from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
 import asyncio
 import logging
+from enum import Enum
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+class DataType(Enum):
+    FUNDAMENTAL_DATA = "FD"
+    TECHNICAL_DATA = "NTD"
+    NON_FINANCIAL_DATA = "NFD"
+
+
 class DataFetcherToolInput(BaseModel):
     stock_symbol: str = Field(description="Stock symbol of the data to fetch.")
+    data_type: DataType = Field(description="Type of stock data to fetch.. eg. Fundamental data")
 
 
 class DataFetcherToolResult(SearchToolResult):
@@ -65,7 +73,7 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             cash_flow=cash_flow,
             additional_info=additional_info
         )
-        logging.info(f"_get_fundamental_data END with output {result}")
+        #logging.info(f"_get_fundamental_data END with output {result}")
         return result
 
     #def _get_technical_data(self, stock_symbol: str, start_date: str, end_date : str)-> DataFetcherToolResult:
@@ -76,15 +84,18 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             options: ToolRunOptions | None,
             context: RunContext,
     ) -> DataFetcherToolOutput:
-        fundamental_data = self._get_fundamental_data(input)
-        output = DataFetcherToolOutput(results=[fundamental_data])
+        output = None
+        if input.data_type.value == DataType.FUNDAMENTAL_DATA.value:
+            fundamental_data = self._get_fundamental_data(input)
+            output = DataFetcherToolOutput(results=[fundamental_data])
         return output
 
 
 async def main() -> None:
     tool = DataFetcherTool()
     stock_symbol = "IBM"
-    input = DataFetcherToolInput(stock_symbol=stock_symbol)
+    data_type = DataType("FD")
+    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=data_type)
     data = await tool.run(input)
     logging.info(f"///////////////////////////////{data}")
 
