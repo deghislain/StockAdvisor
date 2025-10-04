@@ -11,93 +11,63 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
 from stock_adv_utils import DataType
+from stock_adv_prompts import DATA_FETCHING_PROMPT
 import asyncio
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-async def fetch_data(stock_symbol: str):
-    data_fetcher_agent = RequirementAgent(
-        name="DataFetchAgent",
-        llm=ChatModel.from_name(SMALL_MODEL),
-        tools=[
-            ThinkTool(),  # to reason
-            DataFetcherTool()
-        ],
-        instructions=""" 
-        You are an AI agent tasked with retrieving financial data essential for stock investors from Yahoo Finance. Please follow these guidelines to ensure thorough and accurate data retrieval:
-    Data Retrieval Procedure
+class DataFetcherAgent:
 
-    Fetch the Data
-        Use the DataFetcherTool to obtain financial data based on the provided stock symbol.
+    async def _retrieve_data(self, prompt: str):
+        data_fetcher_agent = RequirementAgent(
+            name="DataFetchAgent",
+            llm=ChatModel.from_name(SMALL_MODEL),
+            tools=[
+                ThinkTool(),  # to reason
+                DataFetcherTool()
+            ],
+            instructions=DATA_FETCHING_PROMPT,
+            requirements=[
+                ConditionalRequirement(ThinkTool, force_at_step=1),
+                ConditionalRequirement(DataFetcherTool, min_invocations=1),
+            ]
+        )
+        main_agent = RequirementAgent(
+            name="MainAgent",
+            llm=ChatModel.from_name(SMALL_MODEL),
+            tools=[
+                ThinkTool(),
+                HandoffTool(
+                    data_fetcher_agent,
+                    name="DataFetchAgent",
+                    description="Consult the data fetcher Agent when ask to fetch data about a provided stock.",
+                ),
 
-    Data Retrieval Sequence
+            ],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            # Log all tool calls to the console for easier debugging
+            middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
+        )
+        agent_response = ""
+        try:
+            user_query = prompt
+            response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
+            agent_response = response.state.answer.text
+            logging.info(f"*****************************fetch_data END with output: {agent_response}")
+        except FrameworkError as err:
+            logging.error(f"Error: {err.explain()}")
+        return agent_response
 
-        Income Statement: Collect the following metrics:
-            Net Income
-            Earnings per Share (EPS)
-            Total Revenues
-            Total Expenses
-            Gross Profit Margin
-            Operating Income (EBIT)
-            Operating Cash Flow
-
-        Balance Sheet: Gather the following data points:
-            Total Assets
-            Current Liabilities
-            Long-Term Debt
-            Total Liabilities
-            Shareholders’ Equity
-
-        Cash Flow Statement: Retrieve these key ratios:
-            Debt-to-Equity Ratio
-            Current Ratio
-            Return on Equity (ROE)
-
-        Additional information: Provide any extra relevant information that aids in fundamental analysis.
-
-    Finalize Your Response
-        Ensure that all the listed metrics and data points are included in your final response.
-        Verify the completeness of the information, ensuring no critical details are omitted.
-
-By adhering to this structured approach, you will deliver valuable and comprehensive data for stock investors.
-
-        """,
-        requirements=[
-            ConditionalRequirement(ThinkTool, force_at_step=1),
-            ConditionalRequirement(DataFetcherTool, min_invocations=1),
-        ]
-    )
-    main_agent = RequirementAgent(
-        name="MainAgent",
-        llm=ChatModel.from_name(SMALL_MODEL),
-        tools=[
-            ThinkTool(),
-            HandoffTool(
-                data_fetcher_agent,
-                name="DataFetchAgent",
-                description="Consult the data fetcher Agent when ask to fetch data about a provided stock.",
-            ),
-
-        ],
-        requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
-        # Log all tool calls to the console for easier debugging
-        middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
-    )
-    agent_response = ""
-    try:
-        user_query = f"Fetch the data for this stock: {stock_symbol}. Use {DataType.FUNDAMENTAL_DATA} as data type"
-        response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
-        agent_response = response.state.answer.text
-        logging.info(f"*****************************fetch_data END with output: {agent_response}")
-    except FrameworkError as err:
-        logging.error(f"Error: {err.explain()}")
-    return agent_response
+    async def fetch_data(self, stock_symbol: str, data_type: DataType):
+        user_query = f"Fetch the data for this stock: {stock_symbol}. Use {data_type} as data type"
+        return await self._retrieve_data(user_query)
 
 
 async def main():
-    await fetch_data("IBM")
+    data_fetcher_agent = DataFetcherAgent()
+    await data_fetcher_agent.fetch_data("IBM", DataType.FUNDAMENTAL_DATA)
 
 
 if __name__ == "__main__":
