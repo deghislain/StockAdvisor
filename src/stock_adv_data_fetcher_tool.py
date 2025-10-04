@@ -9,15 +9,9 @@ from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
 import asyncio
 import logging
-from enum import Enum
+from stock_adv_utils import DataType
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-class DataType(Enum):
-    FUNDAMENTAL_DATA = "FD"
-    TECHNICAL_DATA = "NTD"
-    NON_FINANCIAL_DATA = "NFD"
 
 
 class DataFetcherToolInput(BaseModel):

@@ -10,6 +10,7 @@ from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
+from stock_adv_utils import DataType
 import asyncio
 import logging
 
@@ -86,7 +87,7 @@ By adhering to this structured approach, you will deliver valuable and comprehen
     )
     agent_response = ""
     try:
-        user_query = f"Fetch the data for this stock: {stock_symbol}."
+        user_query = f"Fetch the data for this stock: {stock_symbol}. Use {DataType.FUNDAMENTAL_DATA} as data type"
         response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
         agent_response = response.state.answer.text
         logging.info(f"*****************************fetch_data END with output: {agent_response}")
