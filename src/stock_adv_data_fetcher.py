@@ -19,8 +19,13 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 class DataFetcherAgent:
-
+    """Responsible for gathering stock data from various sources."""
     async def _retrieve_data(self, prompt: str):
+        """
+              Use a lightweight LLM to fetch the requested data.
+              Returns the raw response text.
+              """
+        # Build the agent that will perform the actual fetching
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
             llm=ChatModel.from_name(SMALL_MODEL),
@@ -34,6 +39,7 @@ class DataFetcherAgent:
                 ConditionalRequirement(DataFetcherTool, min_invocations=1),
             ]
         )
+        # The main agent orchestrates the hand‑off to the data fetcher
         main_agent = RequirementAgent(
             name="MainAgent",
             llm=ChatModel.from_name(SMALL_MODEL),
@@ -61,6 +67,9 @@ class DataFetcherAgent:
         return agent_response
 
     async def fetch_data(self, stock_symbol: str, data_type: DataType):
+        """
+               Public entry point that composes the user query and invokes internal logic.
+               """
         user_query = f"Fetch the data for this stock: {stock_symbol}. Use {data_type} as data type"
         return await self._retrieve_data(user_query)
 
