@@ -28,7 +28,7 @@ class DataFetcherAgent:
         # Build the agent that will perform the actual fetching
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
-            llm=ChatModel.from_name(SMALL_MODEL),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=1200),
             tools=[
                 ThinkTool(),  # to reason
                 DataFetcherTool()
@@ -37,12 +37,12 @@ class DataFetcherAgent:
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
                 ConditionalRequirement(DataFetcherTool, min_invocations=1),
-            ]
+            ],
         )
         # The main agent orchestrates the hand‑off to the data fetcher
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=1200),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -59,7 +59,7 @@ class DataFetcherAgent:
         agent_response = ""
         try:
             user_query = prompt
-            response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
+            response = await main_agent.run(user_query, expected_output="Helpful and clear response.", timeout=1200)
             agent_response = response.state.answer.text
             logging.info(f"*****************************fetch_data END with output: {agent_response}")
         except FrameworkError as err:

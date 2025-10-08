@@ -6,6 +6,7 @@ import streamlit as st
 from typing import Dict, Any
 
 from stock_adv_agent import get_recommendation_agent_response
+from stock_adv_report_generator import ReportGeneratorAgent
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -78,9 +79,10 @@ def get_user_input():
     return user_stock
 
 
-def generate_report(user_stock: str):
+async def generate_report(user_stock: str):
     """Generate and display the report."""
-    generated_report = "My first report"
+    report_generator = ReportGeneratorAgent()
+    generated_report = await report_generator.generate_report(user_stock)
     if generated_report:
         st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
 
@@ -97,7 +99,7 @@ async def create_interface():
     user_stock = get_user_input()
     if st.button("Generate Report") or user_stock:
         if user_stock:
-            generate_report(user_stock)
+            await generate_report(user_stock)
             user_question = get_user_questions()
             if user_question:
                 agent_response = await get_recommendation_agent_response(user_question)

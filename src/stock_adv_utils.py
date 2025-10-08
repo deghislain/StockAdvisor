@@ -1,6 +1,7 @@
 
 LARGE_MODEL = "ollama:llama3.1:8b"
 SMALL_MODEL = "ollama:granite4:micro-h"
+FIN_MODEL = "0xroyce/plutus:latest"
 
 from enum import Enum
 
