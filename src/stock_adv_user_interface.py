@@ -1,5 +1,6 @@
 """Manages the app's user interface and user interactions.
 Triggers the DataFetcher module to gather real-time data for the specified stock symbol"""
+import asyncio
 
 import streamlit as st
 
@@ -99,7 +100,8 @@ async def create_interface():
     user_stock = get_user_input()
     if st.button("Generate Report") or user_stock:
         if user_stock:
-            await generate_report(user_stock)
+            await asyncio.create_task(generate_report(user_stock))
+            #await generate_report(user_stock)
             user_question = get_user_questions()
             if user_question:
                 agent_response = await get_recommendation_agent_response(user_question)

@@ -15,6 +15,7 @@ fin_analyst_agent = ChatOllama(model=FIN_MODEL, temperature=0)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 class FinAnalystAgent:
     async def _perform_fundamental_analysis(self, stock_data: DataFrame) -> str:
         logging.info(f"******************************_perform_fundamental_analysis START with input: {stock_data}")

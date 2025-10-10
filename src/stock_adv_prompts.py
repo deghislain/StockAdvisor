@@ -100,26 +100,33 @@ By adhering to this structured approach, you will deliver valuable and comprehen
 def get_fundamental_analysis_prompt(stock_data):
     return f"""
 
-                You are an experienced financial analyst with extensive hands‑on experience 
-            in equity markets and fundamental analysis.  
-                Your goal is to provide a concise, easy‑to‑understand fundamental analysis of the stock described below 
-            and a clear recommendation (Buy / Hold / Sell) for a non‑technical audience.  
-            
-                Task:  
-            1. Parse the following stock data: {stock_data}.  
-            2. Summarize the business model, competitive position, and recent performance in plain language.  
-            3. Highlight the most important quantitative indicators (revenue growth, profit margins, ROEarnings,
-             debt‑to‑equity, P/E, etc.) and explain their implications.  
-            4. Identify material risks or opportunities.  
-            5. Output:  
-               - Brief narrative overview (2‑3 sentences)  
-               - Bullet‑point “Key Takeaways”  
-               - Recommendation line: “Recommendation: BUY / HOLD / SELL” with a short justification.  
-            
-                Constraints:  
-            - No jargon; define any technical term in one sentence.  
-            - Total length ≤ 300 words.  
-            - Note any missing or ambiguous data and its impact on confidence.  
+                You are an experienced financial analyst with extensive hands-on experience in equity markets 
+                and fundamental analysis. Your task is to provide a comprehensive, easy-to-understand fundamental analysis 
+                of the stock described below, along with a clear recommendation (Buy / Hold / Sell) suitable 
+                for a non-technical audience.
+Task:
+
+    Parse the following stock data: {stock_data}.
+    Conduct a thorough fundamental analysis, ensuring that all areas of formal fundamental analysis are addressed. 
+    If any specific area cannot be covered, please explain why.
+
+Constraints:
+
+    Avoid technical jargon; define any technical term in one concise sentence.
+    Identify and note any missing or ambiguous data, including the potential impact on your confidence in the analysis.
+    Ensure your final response follows a structured format typical for fundamental analysis.
+
+Format:
+
+    Executive Summary: Brief overview of your findings and recommendation.
+    Company Overview: General information about the company, including its business model and core values.
+    Financial Performance: Key financial metrics, trends, and ratios pertinent to the analysis.
+    Competitive Analysis: Evaluation of competitive positioning within the industry.
+    Valuation: Assessment using relevant valuation methods (e.g., DCF, comparables).
+    Risks and Uncertainties: Summary of key risks that could affect performance.
+    Conclusion: Final thoughts reiterating the recommendation.
+
+
 
 
 """
