@@ -20,15 +20,17 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 class DataFetcherAgent:
     """Responsible for gathering stock data from various sources."""
-    async def _retrieve_data(self, prompt: str):
+
+    async def _retrieve_data(self, user_query: str):
         """
               Use a lightweight LLM to fetch the requested data.
               Returns the raw response text.
               """
         # Build the agent that will perform the actual fetching
+
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=1200),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=2400),
             tools=[
                 ThinkTool(),  # to reason
                 DataFetcherTool()
@@ -39,10 +41,11 @@ class DataFetcherAgent:
                 ConditionalRequirement(DataFetcherTool, min_invocations=1),
             ],
         )
+        '''
         # The main agent orchestrates the hand‑off to the data fetcher
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=1200),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=2400),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -55,11 +58,11 @@ class DataFetcherAgent:
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             # Log all tool calls to the console for easier debugging
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
-        )
+        )'''
         agent_response = ""
         try:
-            user_query = prompt
-            response = await main_agent.run(user_query, expected_output="Helpful and clear response.", timeout=1200)
+            response = await data_fetcher_agent.run(user_query, expected_output="Helpful and clear response.",
+                                                    timeout=2400)
             agent_response = response.state.answer.text
             logging.info(f"*****************************fetch_data END with output: {agent_response}")
         except FrameworkError as err:

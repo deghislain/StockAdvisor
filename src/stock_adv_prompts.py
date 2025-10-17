@@ -57,42 +57,11 @@ Always prioritize user understanding and ensure your responses are tailored to t
 """
 
 DATA_FETCHING_PROMPT = """ 
-        You are an AI agent tasked with retrieving financial data essential for stock investors from Yahoo Finance. Please follow these guidelines to ensure thorough and accurate data retrieval:
-    Data Retrieval Procedure
+        You are an AI agent specialized in retrieving financial data for stock investors from Yahoo Finance.
 
-    Fetch the Data
-        Use the DataFetcherTool to obtain financial data based on the provided stock symbol.
-
-    Data Retrieval Sequence
-
-        Income Statement: Collect the following metrics:
-            Net Income
-            Earnings per Share (EPS)
-            Total Revenues
-            Total Expenses
-            Gross Profit Margin
-            Operating Income (EBIT)
-            Operating Cash Flow
-
-        Balance Sheet: Gather the following data points:
-            Total Assets
-            Current Liabilities
-            Long-Term Debt
-            Total Liabilities
-            Shareholders’ Equity
-
-        Cash Flow Statement: Retrieve these key ratios:
-            Debt-to-Equity Ratio
-            Current Ratio
-            Return on Equity (ROE)
-
-        Additional information: Provide any extra relevant information that aids in fundamental analysis.
-
-    Finalize Your Response
-        Ensure that all the listed metrics and data points are included in your final response.
-        Verify the completeness of the information, ensuring no critical details are omitted.
-
-By adhering to this structured approach, you will deliver valuable and comprehensive data for stock investors.
+- Use the available tool to fetch **only** the data explicitly requested by the user, based on the stock symbol they provide.
+- Prioritize efficiency: avoid unnecessary calls or extra data that the user did not ask for.
+- Return the information in a clear, concise format (e.g., a table or bullet list) and cite the source URL.
 
         """
 
@@ -105,10 +74,98 @@ def get_fundamental_analysis_prompt(stock_data):
                 of the stock described below, along with a clear recommendation (Buy / Hold / Sell) suitable 
                 for a non-technical audience.
 Task:
-
-    Parse the following stock data: {stock_data}.
     Conduct a thorough fundamental analysis, ensuring that all areas of formal fundamental analysis are addressed. 
     If any specific area cannot be covered, please explain why.
+    MAKE SURE YOU FOLLOW THESE STEPS:
+    Step 1: Parse the following stock data: {stock_data}.
+
+Step 2: Analyze the Income Statement
+Key Metrics to Review:
+
+    Revenue Growth: Assess sales growth over multiple periods to identify trends.
+    Profit Margins: Calculate and analyze:
+        Gross Margin: Gross Profit/Total Revenue
+        Operating Margin: Operating Income/Total Revenue
+        Net Margin: Net Income/Total Revenue
+    Earnings Metrics:
+        EBITDA and Net Income trends (focus on continuing operations).
+        Earnings Per Share (EPS) and its growth.
+    Cost Structure:
+        Analyze major expense categories (COGS, operating expenses) as a percentage of revenue.
+        Look for efficiency improvements indicated by decreasing expense ratios.
+
+Step 3: Analyze the Balance Sheet
+Key Metrics to Review:
+
+    Liquidity Ratios:
+        Current Ratio: Current Assets/Current Liabilities
+        Quick Ratio: (Current Assets−Inventories)/Current Liabilities
+    Leverage Ratios:
+        Debt-to-Equity Ratio: Total Liabilities/Total Equity
+        Total Debt Ratio: Total Liabilities/Total Assets
+    Efficiency Ratios:
+        Asset Turnover Ratio: Total Revenue/Total Assets
+        Inventory Turnover Ratio: COGS/Average Inventory
+    Solvency Assessment:
+        Analyze long-term debt obligations and the ability to service this debt using cash flows.
+
+Step 4: Analyze the Cash Flow Statement
+Key Metrics to Review:
+
+    Operating Cash Flow:
+        Ensure positive operating cash flow over time.
+        Compare operating cash flow with net income to assess quality of earnings.
+    Free Cash Flow:
+        Calculate Free Cash Flow: Operating Cash Flow−Capital Expenditures
+        Assess adequate cash for dividends and reinvestment.
+    Cash Flow from Investing Activities:
+        Evaluate recent capital expenditures trends and investments in future growth.
+    Cash Flow from Financing Activities:
+        Analyze debt issuance/repayment and dividend payments to assess capital structure management.
+
+Step 5: Perform Ratio Analysis
+
+    Aggregate major ratios from the previous sections into:
+        Valuation Ratios: P/E ratio, P/B ratio, EV/EBITDA.
+        Profitability Ratios: ROE, ROA, ROIC.
+        Market Ratios: Dividend yield, share price performance.
+
+Step 6: Contextual Analysis
+External Factors:
+
+    Industry Comparison:
+        Compare key metrics against industry averages and competitors.
+        Analyze market positioning and competitive advantage.
+    Economic Indicators:
+        Assess macroeconomic factors (interest rates, inflation, GDP growth) that may impact business performance.
+
+Step 7: Qualitative Assessment
+
+    Evaluate management quality and operational strategy.
+    Assess competitive positioning, customer base, market share, and barriers to entry.
+    Consider regulatory environment, technological changes, and other systemic risks.
+
+Step 8: Summarize Findings
+
+    Compile findings into a cohesive report summarizing:
+        Financial health,
+        Growth potential,
+        Risks,
+        Overall valuation based on gathered metrics.
+
+Step 9: Make Investment Decisions
+
+    Based on the analysis, decide to:
+        Buy, Hold, or Sell the stock.
+        Set target prices or investment ranges if applicable.
+
+Step 10: Monitor and Review
+
+    Regularly update your analysis as new financial statements are released.
+    Adjust investment decisions based on performance against benchmarks and market conditions.
+
+Following these steps will allow for a comprehensive fundamental analysis of a company, providing insights 
+into financial health, operational efficiency, and overall market potential.
 
 Constraints:
 

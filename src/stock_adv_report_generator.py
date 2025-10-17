@@ -13,12 +13,18 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 class ReportGeneratorAgent:
+    def __init__(self):
+        self.data_fetcher_agent = DataFetcherAgent()
+        self.fundamental_data = None
+
     async def _fetch_fundamental_data(self, stock_symbol: str):
         logging.info(f"******************************_fetch_fundamental_data START with input: {stock_symbol}")
-        data_fetcher_agent = DataFetcherAgent()
-        fundamental_data = await data_fetcher_agent.fetch_data(stock_symbol, DataType.FUNDAMENTAL_DATA)
-        logging.info(f"******************************_fetch_fundamental_data END with output: {fundamental_data}")
-        return fundamental_data
+        #data_fetcher_agent = DataFetcherAgent()
+        if self.fundamental_data is None:
+            self.fundamental_data = await self.data_fetcher_agent.fetch_data(stock_symbol, DataType.FUNDAMENTAL_DATA)
+            logging.info(
+                f"******************************_fetch_fundamental_data END with output: {self.fundamental_data}")
+        return self.fundamental_data
 
     async def _perform_fundamental_analysis(self, stock_data):
         logging.info(f"******************************_perform_fundamental_analysis START with input: {stock_data}")

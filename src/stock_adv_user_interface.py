@@ -83,9 +83,11 @@ def get_user_input():
 async def generate_report(user_stock: str):
     """Generate and display the report."""
     report_generator = ReportGeneratorAgent()
+    #generated_report = await asyncio.create_task(report_generator.generate_report(user_stock))
     generated_report = await report_generator.generate_report(user_stock)
-    if generated_report:
-        st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
+    #if generated_report:
+    #    st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
+    return generated_report
 
 
 def get_user_questions():
@@ -100,8 +102,10 @@ async def create_interface():
     user_stock = get_user_input()
     if st.button("Generate Report") or user_stock:
         if user_stock:
-            await asyncio.create_task(generate_report(user_stock))
-            #await generate_report(user_stock)
+            #Using create_task to avoid 'Event loop is closed' error
+            generated_report = await asyncio.create_task(generate_report(user_stock))
+            if generated_report:
+                st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
             user_question = get_user_questions()
             if user_question:
                 agent_response = await get_recommendation_agent_response(user_question)
