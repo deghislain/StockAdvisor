@@ -38,7 +38,7 @@ class DataFetcherAgent:
             instructions=DATA_FETCHING_PROMPT,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
-                ConditionalRequirement(DataFetcherTool, min_invocations=1),
+                ConditionalRequirement(DataFetcherTool, min_invocations=1, max_invocations=2),
             ],
         )
         '''
@@ -73,7 +73,8 @@ class DataFetcherAgent:
         """
                Public entry point that composes the user query and invokes internal logic.
                """
-        user_query = f"Fetch the data for this stock: {stock_symbol}. Use {data_type} as data type"
+        user_query = f"""Fetch the Income Statement, Balance Sheet and Cash Flow data for this stock: {stock_symbol}. 
+        Use {data_type} as data type"""
         return await self._retrieve_data(user_query)
 
 

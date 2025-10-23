@@ -8,7 +8,7 @@ the tools needed to navigate the stock market confidently.
 StockAdvisor Workflow Design
 
     User Input via UserInterface
-        User enters stock symbol (e.g., "AAPL") and preferences.
+        User enters stock symbol (e.g., "IBM") and preferences.
 
     Data Fetching with DataFetcher
         DataFetcher retrieves real-time stock data from various sources.

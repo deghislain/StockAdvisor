@@ -5,5 +5,20 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-   "streamlit"
+   "streamlit",
+   "langchain_ollama",
+   "langchain_experimental",
+   "langgraph",
+   "langchain-community",
+   "ollama",
+   "mcp[cli]>=1.14.0",
+   "httpx>=0.28.1",
+   "langchain_mcp_tools",
+   "langchain-community",
+   "websockets",
+   "ddgs",
+   "beeai_framework",
+   "bs4",
+   "beeai-framework[wikipedia]",
+   "yfinance",
 ]

@@ -7,10 +7,10 @@ from beeai_framework.emitter import Emitter
 from beeai_framework.tools import Tool, ToolRunOptions
 from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
+from stock_adv_utils import DataType
 import asyncio
 import logging
-from stock_adv_utils import (
-    DataType,
+from stock_adv_data_fetcher_utils import (
     filter_necessary_additional_info_data,
     filter_necessary_fundamental_data,
     INCOME_STATEMENT_DATA_KEYS,
@@ -55,37 +55,42 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
 
     def _get_fundamental_data(self, input: DataFetcherToolInput) -> DataFetcherToolResult:
         logging.info(f"_get_fundamental_data START with input {input}")
-        stock_data = yf.Ticker(input.stock_symbol)
+        result = None
+        try:
+                stock_data = yf.Ticker(input.stock_symbol)
 
-        income_statement = getattr(stock_data, "income_stmt", None)
-        filtered_income_statement = filter_necessary_fundamental_data(income_statement, INCOME_STATEMENT_DATA_KEYS)
-        balance_sheet = getattr(stock_data, "balance_sheet", None)
-        filtered_balance_sheet = filter_necessary_fundamental_data(balance_sheet, BALANCE_SHEET_DATA_KEYS)
-        cash_flow = getattr(stock_data, "cash_flow", None)
-        filtered_cash_flow = filter_necessary_fundamental_data(cash_flow, CASH_FLOW_DATA_KEYS)
-        info = yf.Ticker(input.stock_symbol).info
-        filtered_necessary_additional_info= filter_necessary_additional_info_data(info)
-        #pd.set_option('display.max_columns', None)  # Display all columns
-        #pd.set_option('display.width', 1000)  # Adjust width to show more content
-        #pd.set_option('display.max_rows', None)  # Display all rows (if more than one)
+                income_statement = getattr(stock_data, "income_stmt", None)
+                filtered_income_statement = filter_necessary_fundamental_data(income_statement, INCOME_STATEMENT_DATA_KEYS, '#### Income Statement: ')
+                balance_sheet = getattr(stock_data, "balance_sheet", None)
+                filtered_balance_sheet = filter_necessary_fundamental_data(balance_sheet, BALANCE_SHEET_DATA_KEYS, '#### Balance Sheet: ')
+                cash_flow = getattr(stock_data, "cash_flow", None)
+                filtered_cash_flow = filter_necessary_fundamental_data(cash_flow, CASH_FLOW_DATA_KEYS, '#### Cash Flow: ')
+                info = yf.Ticker(input.stock_symbol).info
+                filtered_necessary_additional_info= filter_necessary_additional_info_data(info)
+            #pd.set_option('display.max_columns', None)  # Display all columns
+            #pd.set_option('display.width', 1000)  # Adjust width to show more content
+            #pd.set_option('display.max_rows', None)  # Display all rows (if more than one)
 
-        logging.info(f"**********************************************filtered_income_statement= {filtered_income_statement} *************")
-        logging.info(f"**********************************************filtered_balance_sheet= {filtered_balance_sheet} *************")
-        logging.info(f"**********************************************filtered_cash_flow= {filtered_cash_flow} *************")
+                logging.info(f"**********************************************filtered_income_statement= {filtered_income_statement} *************")
+                logging.info(f"**********************************************filtered_balance_sheet= {filtered_balance_sheet} *************")
+                logging.info(f"**********************************************filtered_cash_flow= {filtered_cash_flow} *************")
 
-        logging.info(f"**********************************************filtered_necessary_additional_info= {filtered_necessary_additional_info} *************")
+                logging.info(f"**********************************************filtered_necessary_additional_info= {filtered_necessary_additional_info} *************")
 
-        result = DataFetcherToolResult(
-            title=f"Financial statements for {input.stock_symbol}",
-            description="""Income statement, balance sheet, cash‑flow data and company's attributes 
-            such as ratios e.g P/E fetched via yfinance.""",
-            url=f"https://finance.yahoo.com/quote/{input.stock_symbol}",
-            income_statement=filtered_income_statement,
-            balance_sheet=filtered_balance_sheet,
-            cash_flow=filtered_cash_flow,
-            additional_info=filtered_necessary_additional_info
-        )
-        logging.info(f"***********************************_get_fundamental_data END with output {result}")
+                result = DataFetcherToolResult(
+                    title=f"Financial statements for {input.stock_symbol}",
+                    description="""Income statement, balance sheet, cash‑flow data and company's attributes 
+                    such as ratios e.g P/E fetched via yfinance.""",
+                    url=f"https://finance.yahoo.com/quote/{input.stock_symbol}",
+                    income_statement=filtered_income_statement,
+                    balance_sheet=filtered_balance_sheet,
+                    cash_flow=filtered_cash_flow,
+                    additional_info=filtered_necessary_additional_info
+                )
+                logging.info(f"***********************************_get_fundamental_data END with output {result}")
+        except Exception as ex:
+            logging.error(ex)
+
         return result
 
     #def _get_technical_data(self, stock_symbol: str, start_date: str, end_date : str)-> DataFetcherToolResult:
