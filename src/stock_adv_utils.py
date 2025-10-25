@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 import logging
 
 LARGE_MODEL = "ollama:llama3.1:8b"
-SMALL_MODEL = "ollama:ibm/granite4.0-preview:tiny"
+SMALL_MODEL = "ollama:granite4:micro-h"
 FIN_MODEL = "0xroyce/plutus:latest"
 DATA_DATES = ['2024-12-31', '2023-12-31', '2022-12-31', '2021-12-31', '2020-12-31']
 

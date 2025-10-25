@@ -182,7 +182,24 @@ DATA_FETCHING_PROMPT = """
             3. Prioritize user-requested specific data over comprehensive reporting
             
             ### Response Format
-            - Use a markdown table or compact list
+            - Return your result in a JSON format. Use this as example:
+            {
+                "ticker": "RGTI",
+                "financialStatement": "Income Statement",
+                "data": {
+                    "normalizedEBITDA": {
+                        "2024-12-31": -56491000,
+                        "2023-12-31": -58802000,
+                        "2022-12-31": -94253000
+                    },
+                    "totalUnusualItems": {
+                        "2024-12-31": -134336000,
+                        "2023-12-31": -3100000,
+                        "2022-12-31": 35035000
+                    }
+                }
+            }
+
             - Mark missing data with "N/A" or "Not Available"
 
         """

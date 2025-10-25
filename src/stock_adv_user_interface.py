@@ -103,7 +103,7 @@ async def create_interface():
     if st.button("Generate Report") or user_stock:
         if user_stock:
             #Using create_task to avoid 'Event loop is closed' error
-            generated_report = await asyncio.create_task(generate_report(user_stock))
+            generated_report = await asyncio.gather(generate_report(user_stock))
             if generated_report:
                 st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
             user_question = get_user_questions()
