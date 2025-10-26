@@ -181,23 +181,64 @@ DATA_FETCHING_PROMPT = """
                - DO NOT attempt alternative retrieval methods
             3. Prioritize user-requested specific data over comprehensive reporting
             
-            ### Response Format
-            - Return your result in a JSON format. Use this as example:
-            {
-                "ticker": "RGTI",
-                "financialStatement": "Income Statement",
-                "data": {
+            ### ### 🧮 OUTPUT FORMAT
+            - Return your review in a **structured JSON object**. Use this as example:
+                            {
+              "ticker": "RGTI",
+              "financialStatements": [
+                {
+                  "statement": "Income Statement",
+                  "data": {
                     "normalizedEBITDA": {
-                        "2024-12-31": -56491000,
-                        "2023-12-31": -58802000,
-                        "2022-12-31": -94253000
+                      "2024-12-31": -56491000,
+                      "2023-12-31": -58802000,
+                      "2022-12-31": -94253000
                     },
                     "totalUnusualItems": {
-                        "2024-12-31": -134336000,
-                        "2023-12-31": -3100000,
-                        "2022-12-31": 35035000
+                      "2024-12-31": -134336000,
+                      "2023-12-31": -3100000,
+                      "2022-12-31": 35035000
                     }
+                  }
+                },
+                {
+                  "statement": "Balance Sheet",
+                  "data": {
+                    "Total Debt": {
+                      "2024-12-31": 8800000.0,
+                      "2023-12-31": 8800000.0,
+                      "2022-12-31": 658.0
+                    },
+                    "Working Capital": {
+                      "2024-12-31": 568,
+                      "2023-12-31": 214,
+                      "2022-12-31": 782
+                    }
+                  }
+                },
+                {
+                  "statement": "Cash Flow",
+                  "data": {
+                    "Free Cash Flow": {
+                      "2024-12-31": -568,
+                      "2023-12-31": -8555,
+                      "2022-12-31": -9558
+                    },
+                    "totalUnusualItems": {
+                      "2024-12-31": -134336000,
+                      "2023-12-31": -3100000,
+                      "2022-12-31": 35035000
+                    }
+                  }
+                },
+                {
+                  "statement": "Additional Info",
+                  "data": {
+                    "previousClose": 39.595,
+                    "marketCap": 38.84
+                  }
                 }
+              ]
             }
 
             - Mark missing data with "N/A" or "Not Available"
@@ -323,3 +364,141 @@ def get_fundamental_analysis_prompt(stock_data):
                 Conclusion: Final thoughts reiterating the recommendation.
 
 """
+
+
+def get_fundamental_analysis_review_prompt(data, fund_analysis):
+    return f"""
+
+You are a **Senior Financial Analyst** with extensive expertise in **equity markets and fundamental analysis**.
+
+Your task is to **review** a given fundamental analysis report using the provided review rubric.
+
+---
+### 🎯 OBJECTIVE
+You will:
+1. Evaluate the quality of the fundamental analysis **objectively** using the rubric below.
+2. Assign **numerical scores (1–5)** for each criterion, applying the weights accurately.
+3. Provide a **weighted total score** and an overall **rating** (Exceptional, Strong, Moderate, Weak, Poor).
+4. Write a **summary of strengths and weaknesses** based on your scoring.
+5. Suggest **specific, actionable improvements** for weaker areas.
+6. Produce an **enhanced rewritten version** of the original analysis — improving structure, depth, and clarity
+   while retaining factual accuracy and the original analytical intent.
+
+---
+### 📘 INPUTS
+**1. Financial Data Used:**
+{data}
+
+**2. Fundamental Analysis to Review:**
+{fund_analysis}
+
+---
+### 📊 REVIEW RUBRIC
+Use the following rubric to guide your evaluation strictly:
+
+{{
+    "fundamental_analysis_review_rubric": {{
+        "criteria": [
+            {{
+                "id": 1,
+                "name": "Analytical Depth & Accuracy",
+                "weight": 0.25,
+                "description": "Evaluates how deeply the analysis interprets financial data, identifies trends, and explains underlying causes.",
+                "scoring_scale":{{
+                    "1": "Relies on generic statements, lacks data accuracy, or misinterprets metrics.",
+                    "3": "Includes correct data but limited interpretation or context.",
+                    "5": "Demonstrates deep understanding; interprets trends clearly with accurate data and solid reasoning."
+                }}
+            }},
+            {{
+                "id": 2,
+                "name": "Structure & Clarity",
+                "weight": 0.15,
+                "description": "Assesses organization, readability, and logical flow of the analysis.",
+                "scoring_scale": {{
+                    "1": "Disorganized; lacks clear headings, logical flow, or readability.",
+                    "3": "Organized but uneven formatting or flow; some sections hard to follow.",
+                    "5": "Highly structured, polished, and easy to read; clear flow from data → insight → conclusion."
+                }}
+            }},
+            {{
+                "id": 3,
+                "name": "Valuation Soundness",
+                "weight": 0.25,
+                "description": "Evaluates appropriateness and transparency of valuation methods and assumptions.",
+                "scoring_scale": {{
+                    "1": "Uses inappropriate or unclear valuation methods; assumptions missing or unrealistic.",
+                    "3": "Applies standard valuation models but with limited justification.",
+                    "5": "Uses appropriate models (DCF, multiples, etc.) with transparent, realistic assumptions and clear intrinsic value estimate."
+                }}
+            }},
+            {{
+                "id": 4,
+                "name": "Risk & Sensitivity Awareness",
+                "weight": 0.15,
+                "description": "Assesses whether the analysis identifies and evaluates key risks and uncertainties.",
+                "scoring_scale": {{
+                    "1": "Ignores key risks or uncertainties; overly optimistic or one-sided.",
+                    "3": "Mentions some risks but lacks depth or quantification.",
+                    "5": "Identifies major risks comprehensively; includes scenario or sensitivity analysis; balanced perspective."
+                }}
+            }},
+            {{
+                "id": 5,
+                "name": "Investment Insight & Actionability",
+                "weight": 0.20,
+                "description": "Evaluates clarity, evidence, and actionability of the investment recommendation.",
+                "scoring_scale": {{
+                    "1": "No clear investment stance or unsupported conclusion.",
+                    "3": "Provides a recommendation, but rationale is weak or vague.",
+                    "5": "Offers a clear, data‑driven recommendation with specific rationale and catalysts for change."
+                }}
+            }}
+        ],
+        "formula": "total_score = sum(score_i * weight_i)",
+        "rating_scale": {{
+            "4.5-5.0": "Exceptional — professional, publish-ready analysis",
+            "3.5-4.4": "Strong — reliable with minor improvements needed",
+            "2.5-3.4": "Moderate — useful but lacks depth or rigor",
+            "1.5-2.4": "Weak — needs substantial improvement",
+            "1.0-1.4": "Poor — not credible or analytically sound"
+        }}
+    }}
+}}
+
+---
+### 🧮 OUTPUT FORMAT
+Return your review in a **structured JSON object** with the following fields:
+
+{{
+    "scores": {{
+        "Analytical Depth & Accuracy": 0,
+        "Structure & Clarity": 0,
+        "Valuation Soundness": 0,
+        "Risk & Sensitivity Awareness": 0,
+        "Investment Insight & Actionability": 0
+    }},
+    "weighted_total_score": 0.0,
+    "rating": "",
+    "strengths": [
+        "List of strong aspects"
+    ],
+    "weaknesses": [
+        "List of weak or missing aspects"
+    ],
+    "suggested_improvements": [
+        "Actionable recommendations to improve the analysis"
+    ],
+    "improved_analysis": "Improved and rewritten version of the fundamental analysis, with better clarity, structure, and analytical depth."
+}}
+"""
+
+
+def get_fundamental_analysis_improve_prompt(stock_data, fund_analysis, feedback):
+    return f"""
+        You are a **Senior Financial Analyst** with extensive expertise in **equity markets and fundamental analysis**.
+        
+        The following fundamental analysis: {fund_analysis}, was reviewed and here is the feedback: {feedback}.
+        Considering that it was written based on the following stock data {stock_data}, your task is to use the provided feedback
+        to improve it.    
+    """

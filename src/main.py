@@ -15,18 +15,28 @@ async def main():
 
 
 if __name__ == "__main__":
+
     try:
-        # Get the current time
-        current_time = datetime.now()
-        start_time = current_time.hour * 60 + current_time.minute
-        asyncio.run(main())
-        end_time = current_time.hour * 60 + current_time.minute
-        duration = end_time - start_time
-        logging.info(f"---------------------Process duration = {duration}-------------")
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # No loop – start a fresh one
+            start = datetime.now()
+            logging.info(f"--- Start Time = {start:%H:%M:%S} ---")
+            asyncio.run(main())
+            end = datetime.now()
+            logging.info(f"--- End Time = {end:%H:%M:%S} ---")
+            duration = end - start
+            logging.info(f"--- Process duration = {duration} ---")
+        else:
+            # Already inside a loop – just await the coroutine
+            asyncio.create_task(main())
 
-
-    except FrameworkError as e:
-        logging.error(e)
+    except FrameworkError as fe:
+        logging.error(fe)
         traceback.print_exc()
-        sys.exit(e.explain())
-
+        sys.exit(fe.explain())
+    except Exception as exc:  # catch‑all for unexpected errors
+        logging.error("Unexpected error: %s", exc)
+        traceback.print_exc()
+        sys.exit(1)
