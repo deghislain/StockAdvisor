@@ -1,3 +1,7 @@
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 RECOMMENDATION_AGENT_PROMPT = """
 ---
 
@@ -56,197 +60,9 @@ Always prioritize user understanding and ensure your responses are tailored to t
 ---
 """
 
-DATA_FETCHING_PROMPT = """ 
-            ```markdown
-            You are an AI agent for retrieving financial stock data.
-            Your task is to use the tool at your disposal to retrieve the data for a given stock, then extract 
-            the following data from your tool output.
-            
-            ### Data Points to Retrieve
-            
-            #### Income Statement Data:
-            - 'Normalized EBITDA'
-            - 'EBITDA'
-            - 'EBIT'
-            - 'Normalized Income'
-            - 'Net Income From Continuing And Discontinued Operation'
-            - 'Total Expenses'
-            - 'Diluted EPS'
-            - 'Basic EPS'
-            - 'Net Income'
-            - 'Net Income Including Noncontrolling Interests'
-            - 'Operating Income'
-            - 'Gross Profit'
-            - 'Cost Of Revenue'
-            - 'Total Revenue'
-            - 'Operating Revenue'
-            - 'Total Unusual Items'
-            
-            #### Balance Sheet Data:
-            - 'Total Assets'
-            - 'Total Liabilities'
-            - 'Total Equity'
-            - 'Total Debt'
-            - 'Net Debt'
-            - 'Total Capitalization'
-            - 'Total Non Current Assets'
-            - 'Current Assets'
-            - 'Current Liabilities'
-            - 'Long Term Debt'
-            - 'Current Debt'
-            - 'Total Non Current Liabilities Net Minority Interes'
-            - 'Total Current Liabilities'
-            - 'Total Current Assets'
-            - 'Stockholders Equity'
-            - 'Retained Earnings'
-            - 'Working Capital'
-            - 'Net PPE'
-            - 'Cash and Cash Equivalents'
-            - 'Total Cash'
-            - 'Total Current Assets'
-            - 'Total Current Liabilities'
-            - 'Total Non Current Assets'
-            - 'Total Non Current Liabilities'
-            - 'Total Liabilities'
-            - 'Total Equity'
-            - 'Total Debt'
-            - 'Net Debt'
-            - 'Total Capitalization'
-            - 'Total Assets'
-            
-            #### Cash Flow Data:
-            - 'Operating Cash Flow'
-            - 'Cash Flow From Continuing Operating Activities'
-            - 'Free Cash Flow'
-            - 'Capital Expenditure'
-            - 'Net Income From Continuing Operations'
-            - 'Depreciation Amortization Depletion'
-            - 'Depreciation And Amortization'
-            - 'Depreciation'
-            - 'Cash Dividends Paid'
-            - 'Common Stock Dividend Paid'
-            - 'Issuance Of Debt'
-            - 'Repayment Of Debt'
-            - 'Long Term Debt Issuance'
-            - 'Long Term Debt Payments'
-            - 'Change In Other Working Capital'
-            - 'Change In Inventory'
-            - 'Change In Receivables'
-            - 'Change In Payables And Accrued Expense'
-            - 'Change In Account Payable'
-            
-            #### Additional Information:
-            - 'currentPrice'
-            - 'previousClose'
-            - 'marketCap'
-            - 'fiftyTwoWeekLow'
-            - 'fiftyTwoWeekHigh'
-            - 'dividendYield'
-            - 'payoutRatio'
-            - 'trailingPE'
-            - 'forwardPE'
-            - 'priceToSalesTrailing12Months'
-            - 'priceToBook'
-            - 'grossMargins'
-            - 'ebitdaMargins'
-            - 'operatingMargins'
-            - 'earningsGrowth'
-            - 'revenueGrowth'
-            - 'totalRevenue'
-            - 'freeCashflow'
-            - 'operatingCashflow'
-            - 'quickRatio'
-            - 'currentRatio'
-            - 'returnOnAssets'
-            - 'returnOnEquity'
-            - 'totalDebt'
-            - 'enterpriseValue'
-            - 'enterpriseToRevenue'
-            - 'beta'
-            - 'bookValue'
-            - 'sharesOutstanding'
-            - 'floatShares'
-            
-            ### Core Operational Principles
-            - Return ONLY explicitly requested data points
-            - IMMEDIATELY stop searching if ANY data point is unavailable
-            - NEVER make multiple tool calls to find missing information
-            - Provide a clear, concise response with available data
-            
-            ### Data Retrieval Strategy
-            1. Attempt to retrieve the requested data once
-            2. If SOME required fundamental data are missing:
-               - Return available information
-               - Clearly mark the missing fundamental data as "N/A" or "Not Available"
-               - DO NOT attempt alternative retrieval methods
-            3. Prioritize user-requested specific data over comprehensive reporting
-            
-            ### ### 🧮 OUTPUT FORMAT
-            - Return your review in a **structured JSON object**. Use this as example:
-                            {
-              "ticker": "RGTI",
-              "financialStatements": [
-                {
-                  "statement": "Income Statement",
-                  "data": {
-                    "normalizedEBITDA": {
-                      "2024-12-31": -56491000,
-                      "2023-12-31": -58802000,
-                      "2022-12-31": -94253000
-                    },
-                    "totalUnusualItems": {
-                      "2024-12-31": -134336000,
-                      "2023-12-31": -3100000,
-                      "2022-12-31": 35035000
-                    }
-                  }
-                },
-                {
-                  "statement": "Balance Sheet",
-                  "data": {
-                    "Total Debt": {
-                      "2024-12-31": 8800000.0,
-                      "2023-12-31": 8800000.0,
-                      "2022-12-31": 658.0
-                    },
-                    "Working Capital": {
-                      "2024-12-31": 568,
-                      "2023-12-31": 214,
-                      "2022-12-31": 782
-                    }
-                  }
-                },
-                {
-                  "statement": "Cash Flow",
-                  "data": {
-                    "Free Cash Flow": {
-                      "2024-12-31": -568,
-                      "2023-12-31": -8555,
-                      "2022-12-31": -9558
-                    },
-                    "totalUnusualItems": {
-                      "2024-12-31": -134336000,
-                      "2023-12-31": -3100000,
-                      "2022-12-31": 35035000
-                    }
-                  }
-                },
-                {
-                  "statement": "Additional Info",
-                  "data": {
-                    "previousClose": 39.595,
-                    "marketCap": 38.84
-                  }
-                }
-              ]
-            }
 
-            - Mark missing data with "N/A" or "Not Available"
-
-        """
-
-
-def get_fundamental_analysis_prompt(stock_data):
+def get_fundamental_analysis_prompt():
+    logging.info("******************************Loading Fundamental analysis prompt******************")
     return f"""
 
             You are an experienced financial analyst with extensive hands-on experience in equity markets 
@@ -257,7 +73,7 @@ def get_fundamental_analysis_prompt(stock_data):
                 Conduct a thorough fundamental analysis, ensuring that all areas of formal fundamental analysis are addressed. 
                 If any specific area cannot be covered, please explain why.
                 MAKE SURE YOU FOLLOW THESE STEPS:
-                Step 1: Parse the following stock data: {stock_data}.
+                Step 1: Parse the provided stock data.
             
             Step 2: Analyze the Income Statement
             Key Metrics to Review:
@@ -366,12 +182,14 @@ def get_fundamental_analysis_prompt(stock_data):
 """
 
 
-def get_fundamental_analysis_review_prompt(data, fund_analysis):
+def get_fundamental_analysis_review_prompt():
+    logging.info("******************************Loading Review prompt******************")
     return f"""
 
-You are a **Senior Financial Analyst** with extensive expertise in **equity markets and fundamental analysis**.
+You are a **Senior Financial Analyst** with extensive expertise in **equity markets and fundamental analysis review**.
 
-Your task is to **review** a given fundamental analysis report using the provided review rubric.
+Your task is to **review** a given fundamental analysis report using the provided review rubric and the data that were used
+to perform the given fundamental analysis.
 
 ---
 ### 🎯 OBJECTIVE
@@ -381,16 +199,7 @@ You will:
 3. Provide a **weighted total score** and an overall **rating** (Exceptional, Strong, Moderate, Weak, Poor).
 4. Write a **summary of strengths and weaknesses** based on your scoring.
 5. Suggest **specific, actionable improvements** for weaker areas.
-6. Produce an **enhanced rewritten version** of the original analysis — improving structure, depth, and clarity
-   while retaining factual accuracy and the original analytical intent.
 
----
-### 📘 INPUTS
-**1. Financial Data Used:**
-{data}
-
-**2. Fundamental Analysis to Review:**
-{fund_analysis}
 
 ---
 ### 📊 REVIEW RUBRIC
@@ -488,17 +297,16 @@ Return your review in a **structured JSON object** with the following fields:
     ],
     "suggested_improvements": [
         "Actionable recommendations to improve the analysis"
-    ],
-    "improved_analysis": "Improved and rewritten version of the fundamental analysis, with better clarity, structure, and analytical depth."
+    ]
 }}
 """
 
 
-def get_fundamental_analysis_improve_prompt(stock_data, fund_analysis, feedback):
+def get_fundamental_analysis_improve_prompt():
+    logging.info("******************************Loading Improve prompt******************")
     return f"""
-        You are a **Senior Financial Analyst** with extensive expertise in **equity markets and fundamental analysis**.
+        You are a **Senior Financial Analyst** with extensive expertise in **reviewing 
+        and improving fundamental analysis reports and documents**.
         
-        The following fundamental analysis: {fund_analysis}, was reviewed and here is the feedback: {feedback}.
-        Considering that it was written based on the following stock data {stock_data}, your task is to use the provided feedback
-        to improve it.    
+        Your task is to improve a given fundamental analysis report using a provided feedback.
     """
