@@ -14,7 +14,9 @@ from beeai_framework.tools.handoff import HandoffTool
 from stock_adv_utils import SMALL_MODEL, FIN_MODEL
 from beeai_framework.tools.think import ThinkTool
 from stock_adv_data_fetcher_tool import DataFetcherTool
-from stock_adv_prompts import get_fundamental_analysis_prompt, get_fundamental_analysis_review_prompt,get_fundamental_analysis_improve_prompt
+from stock_adv_prompts import (get_fundamental_analysis_prompt,
+                               get_fundamental_analysis_review_prompt,
+                               get_fundamental_analysis_improve_prompt)
 
 
 fin_analyst_agent = ChatOllama(model=FIN_MODEL, temperature=0, timeout=2400)

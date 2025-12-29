@@ -12,6 +12,7 @@ from stock_adv_utils import DataType
 import asyncio
 import logging
 
+from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool, YahooFinanceNewsInput
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -29,6 +30,7 @@ class DataFetcherToolResult(SearchToolResult):
     balance_sheet: Optional[DataFrame] = None
     cash_flow: Optional[DataFrame] = None
     additional_info: Optional[Series] = None
+    financial_news: Optional[str] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
@@ -54,27 +56,36 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
 
         result = None
         try:
-                stock_data = yf.Ticker(input.stock_symbol)
+            stock_data = yf.Ticker(input.stock_symbol)
 
-                income_statement = getattr(stock_data, "income_stmt", None)
-                balance_sheet = getattr(stock_data, "balance_sheet", None)
-                cash_flow = getattr(stock_data, "cash_flow", None)
-                info = yf.Ticker(input.stock_symbol).info
-                additional_info = pd.Series(info)
+            income_statement = getattr(stock_data, "income_stmt", None)
+            balance_sheet = getattr(stock_data, "balance_sheet", None)
+            cash_flow = getattr(stock_data, "cash_flow", None)
+            info = yf.Ticker(input.stock_symbol).info
+            additional_info = pd.Series(info)
 
-                logging.info(f"**********************************************additional_info= {additional_info} *************")
+            yf_news_tool = YahooFinanceNewsTool()
 
-                result = DataFetcherToolResult(
-                    title=f"Financial statements for {input.stock_symbol}",
-                    description="""Income statement, balance sheet, cash‑flow data and company's attributes 
+            financial_news = yf_news_tool.run(tool_input=input.stock_symbol)
+
+            logging.info(
+                f"**********************************************financial_news= {financial_news} *************")
+
+            logging.info(
+                f"**********************************************additional_info= {additional_info} *************")
+
+            result = DataFetcherToolResult(
+                title=f"Financial statements for {input.stock_symbol}",
+                description="""Income statement, balance sheet, cash‑flow data and company's attributes 
                     such as ratios e.g P/E fetched via yfinance.""",
-                    url=f"https://finance.yahoo.com/quote/{input.stock_symbol}",
-                    income_statement=income_statement,
-                    balance_sheet=balance_sheet,
-                    cash_flow=cash_flow,
-                    additional_info=additional_info
-                )
-                logging.info(f"***********************************get_fundamental_data END with output {result}")
+                url=f"https://finance.yahoo.com/quote/{input.stock_symbol}",
+                income_statement=income_statement,
+                balance_sheet=balance_sheet,
+                cash_flow=cash_flow,
+                additional_info=additional_info,
+                financial_news=financial_news
+            )
+            logging.info(f"***********************************get_fundamental_data END with output {result}")
         except Exception as ex:
             logging.error(ex)
 

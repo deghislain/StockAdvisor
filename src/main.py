@@ -15,7 +15,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 async def main():
-    await create_interface()
+    tab1, tab2 = st.tabs(["Fundamental analysis", "Technical analysis"])
+    with tab1:
+        await create_interface()
+    with tab2:
+        st.header("Inside Tab 2")
+        st.write("This content is in the second tab.")
 
 
 if __name__ == "__main__":
