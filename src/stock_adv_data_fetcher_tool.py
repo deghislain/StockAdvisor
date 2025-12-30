@@ -8,18 +8,16 @@ from beeai_framework.emitter import Emitter
 from beeai_framework.tools import Tool, ToolRunOptions
 from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
-from stock_adv_utils import DataType
 import asyncio
 import logging
 
-from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool, YahooFinanceNewsInput
+from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class DataFetcherToolInput(BaseModel):
     stock_symbol: str = Field(description="Stock symbol of the data to fetch.")
-    data_type: DataType = Field(description="Type of stock data to fetch.. eg. Fundamental data")
 
 
 class DataFetcherToolResult(SearchToolResult):
@@ -105,17 +103,15 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             context: RunContext,
     ) -> DataFetcherToolOutput:
         output = None
-        if input.data_type.value == DataType.FUNDAMENTAL_DATA.value:
-            fundamental_data = DataFetcherTool.get_fundamental_data(input)
-            output = DataFetcherToolOutput(results=[fundamental_data])
+        fundamental_data = DataFetcherTool.get_fundamental_data(input)
+        output = DataFetcherToolOutput(results=[fundamental_data])
         return output
 
 
 async def main() -> None:
     tool = DataFetcherTool()
     stock_symbol = "IBM"
-    data_type = DataType("FFD")
-    input = DataFetcherToolInput(stock_symbol=stock_symbol, data_type=data_type)
+    input = DataFetcherToolInput(stock_symbol=stock_symbol)
     data = await tool.run(input)
     logging.info(f"///////////////////////////////{data}")
 
