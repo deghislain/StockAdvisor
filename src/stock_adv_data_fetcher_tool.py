@@ -53,10 +53,15 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
     @st.cache_data
     def get_fundamental_data(input: DataFetcherToolInput) -> DataFetcherToolResult:
         logging.info(f"_get_fundamental_data START with input {input}")
+        # TODO For now, this is a workaround for when the model fails to get the right input
+        current_input = input.stock_symbol
+        if 'stock' in st.session_state:
+            if current_input is not st.session_state.stock:
+                current_input = st.session_state.stock
 
         result = None
         try:
-            stock_data = yf.Ticker(input.stock_symbol)
+            stock_data = yf.Ticker(current_input)
 
             income_statement = getattr(stock_data, "income_stmt", None)
             balance_sheet = getattr(stock_data, "balance_sheet", None)

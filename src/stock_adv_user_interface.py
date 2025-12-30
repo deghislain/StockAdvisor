@@ -65,25 +65,21 @@ def update_chat_history(input: Any, result: Any) -> None:
     chat_history.extend([input, result])
 
 
-def get_user_input():
-    """Get user input for stock symbol."""
-    user_stock = ""
-    if 'stock' not in st.session_state:
-        user_stock = st.text_input(":blue[Enter a stock symbol:]", placeholder="eg IBM")
-        if user_stock:
-            st.session_state["stock"] = user_stock
-
-    else:
-        user_stock = st.session_state.stock
-        st.text_input(":blue[Enter a stock symbol:]", value=user_stock, placeholder="eg IBM")
-
-    return user_stock
-
-
 async def generate_report(user_stock: str):
     """Generate and display the report."""
     report_generator = ReportGeneratorAgent()
-    generated_report = await report_generator.generate_report(user_stock)
+    #generated_report = await report_generator.generate_report(user_stock)
+    if 'generated_report' not in st.session_state:
+        try:
+            generated_report = await asyncio.create_task(report_generator.generate_report(user_stock))
+        except RuntimeError:
+            # No loop – start a fresh one
+            generated_report = await asyncio.run(report_generator.generate_report(user_stock))
+        if generated_report:
+            st.session_state["generated_report"] = generated_report
+    else:
+        generated_report = st.session_state.generated_report
+
     return generated_report
 
 
@@ -94,21 +90,29 @@ def get_user_questions():
     return None
 
 
-async def create_interface():
+async def create_interface(user_stock):
     """Create the user interface and handle interactions."""
-    user_stock = get_user_input()
     if st.button("Generate Report") or user_stock:
         if user_stock:
-            logging.info(f"---------------------------------------------Generating report for: {user_stock}**********************")
-            try:
-                generated_report = await asyncio.create_task(generate_report(user_stock))
-            except RuntimeError:
-                # No loop – start a fresh one
-                generated_report = await asyncio.run(generate_report(user_stock))
+            logging.info(
+                f"---------------------------------------------Generating report for: {user_stock}**********************")
+            generated_report = None
+            current_input = None
+            if 'stock' in st.session_state:
+                current_input = st.session_state.stock
+            # A new report is generated when user has changed stock symbol or when there is not an existing one
+            if (current_input and current_input is not user_stock) or ('generated_report' not in st.session_state):
+                logging.info(f"*****current_input = {current_input} and user_stock ={user_stock}/// {current_input and current_input is not user_stock}")
+                logging.info(
+                    f"*****('generated_report' not in st.session_state) = {('generated_report' not in st.session_state)}")
+                generated_report = await generate_report(user_stock)
+            else:
+                generated_report = st.session_state.generated_report
 
             if generated_report:
                 st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
                 st.success("Done")
+
             user_question = get_user_questions()
             if user_question:
                 agent_response = await get_recommendation_agent_response(user_question)
