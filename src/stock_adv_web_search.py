@@ -1,91 +1,117 @@
-from ddgs import DDGS
-from typing import List, Dict
+from duckduckgo_search import DDGS
+from typing import Dict, List, Any
+from datetime import datetime
+
 import logging
-from langchain_community.tools import DuckDuckGoSearchRun
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class NewsSearcher:
-    """
-    A small class that queries DuckDuckGo’s *news* vertical.
+    """A small class that queries DuckDuckGo’s *news* vertical."""
 
-    Example
-    -------
-    >>> client = NewsSearcher()
-    >>> articles = client.search("space tourism", max_results=5)
-    >>> for a in articles:
-    ...     print(a["title"])
-    """
-
-    def __init__(self,
-                 region: str = "wt-wt",
-                 safesearch: str = "On"):
+    def search(self, ticker: str, limit: int = 5) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Parameters
-        ----------
-        region: str
-            DDG region code (default “wt-wt” – worldwide).
-        safesearch: str
-            One of “Off”, “Moderate”, or “Strict”.
-        """
-        self.region = region
-        self.safesearch = safesearch
+        Collects recent news articles, social media posts, and opinions for a given stock.
+        Uses DuckDuckGo search engine as an aggregator (no API key required).
 
-    def _format_result(self, raw: Dict) -> Dict:
-        logging.info("*********************_format_result START")
-        """Extract the fields we care about from a raw DDGS result."""
-        return {
-            "title": raw.get("title"),
-            "url": raw.get("url"),
-            "source": raw.get("source"),
-            "date": raw.get("date"),
-            "snippet": raw.get("body")
+        Args:
+            ticker: Stock ticker symbol (e.g., 'NVDA', 'TSLA', 'AAPL')
+            limit: Maximum number of results per category (default: 5)
+
+        Returns:
+            Dictionary containing:
+            - 'news': Recent financial news articles
+            - 'social': Social media posts and forum discussions
+        """
+        report = {
+            "ticker": ticker.upper(),
+            "timestamp": datetime.now().isoformat(),
+            "news": [],
+            "social": []
         }
 
-    def search(self,
-               topic: str,
-               max_results: int = 10) -> List[Dict]:
-        logging.info(f"*********************search START with input: {topic}")
-        """
-        Query DuckDuckGo news and return a list of article dictionaries.
+        with DDGS() as ddgs:  # Context manager ensures proper session handling
 
-        Parameters
-        ----------
-        topic: str
-            Search term, e.g. “artificial intelligence”.
-        max_results: int, optional
-            Upper bound on the number of articles returned (default 10).
+            # 1. Official News (High Credibility)
+            # Using .news() for structured news results with source attribution
+            try:
+                news_results = ddgs.news(
+                    keywords=f"{ticker} stock",
+                    region="us-en",
+                    max_results=limit
+                )
 
-        Returns
-        -------
-        List[Dict]
-            Each dict contains ``title``, ``url``, ``source``, ``date`` and
-            ``snippet``.
-        """
-        results: List[Dict] = []
+                for item in news_results:
+                    report["news"].append({
+                        "title": item.get("title", ""),
+                        "source": item.get("source", "Unknown"),
+                        "date": item.get("date", "N/A"),
+                        "url": item.get("url", ""),
+                        "snippet": item.get("body", "")[:200] + "..."
+                    })
+            except Exception as e:
+                print(f"⚠️ News retrieval failed: {e}")
 
-        # DDGS strips identifying metadata before the request is sent.
+            # 2. Social Media & Forum Discussions
+            # Using .text() with site: operators to target social platforms
+            # This aggregates Reddit, StockTwits, and Twitter without needing their APIs
+            try:
+                social_query = f'{ticker} stock (site:reddit.com OR site:stocktwits.com OR site:twitter.com)'
+                social_results = ddgs.text(
+                    keywords=social_query,
+                    region="wt-wt",
+                    max_results=limit
+                )
 
-        with DDGS() as ddgs:
-            for raw in ddgs.news(topic,
-                                 region=self.region,
-                                 safesearch=self.safesearch):
-                results.append(self._format_result(raw))
-                if len(results) >= max_results:
-                    break
+                for item in social_results:
+                    # Determine platform from URL
+                    url = item.get("href", "")
+                    if "reddit.com" in url:
+                        platform = "Reddit"
+                    elif "stocktwits.com" in url:
+                        platform = "StockTwits"
+                    elif "twitter.com" in url:
+                        platform = "Twitter"
+                    else:
+                        platform = "Forum"
 
-        search = DuckDuckGoSearchRun()
+                    report["social"].append({
+                        "platform": platform,
+                        "title": item.get("title", "Discussion"),
+                        "url": url,
+                        "snippet": item.get("body", "")[:150] + "..."
+                    })
+            except Exception as e:
+                print(f"⚠️ Social retrieval failed: {e}")
 
-        additional_info = search.invoke(topic)
-        results.append(additional_info)
-        logging.info(f"*********************search ENDED Successfully additional_info = {additional_info}")
-        return results
+        return report
 
 
-# ----------------------------------------------------------------------
-# Example usage
 if __name__ == "__main__":
-    query = "What is the current IBM stock price"
-    client = NewsSearcher()
-    #get_latest_news(query)
+    target_ticker = "NVDA"
+
+    logging.info(f"Generating intelligence report for ${target_ticker}...\n")
+    news_searcher = NewsSearcher()
+    intel = news_searcher.search(target_ticker, limit=4)
+
+    # Display Results
+    logging.info("=" * 60)
+    logging.info(f"📊 STOCK INTELLIGENCE REPORT: {intel['ticker']}")
+    logging.info(f"Generated: {intel['timestamp']}")
+    logging.info("=" * 60)
+
+    logging.info(f"\n📰 FINANCIAL NEWS ({len(intel['news'])} articles)")
+    logging.info("-" * 50)
+    for idx, article in enumerate(intel['news'], 1):
+        logging.info(f"\n{idx}. {article['title']}")
+        logging.info(f"   📎 Source: {article['source']} ({article['date']})")
+        logging.info(f"   🌐 {article['url']}")
+        logging.info(f"   📝 {article['snippet']}")
+
+    logging.info(f"\n💬 SOCIAL MEDIA DISCUSSIONS ({len(intel['social'])} posts)")
+    logging.info("-" * 50)
+    for idx, post in enumerate(intel['social'], 1):
+        logging.info(f"\n{idx}. [{post['platform']}] {post['title']}")
+        logging.info(f"   🔗 {post['url']}")
+        logging.info(f"   💭 {post['snippet']}")

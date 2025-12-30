@@ -16,18 +16,35 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 #TODO I have to redesign from scratch
-def get_user_input():
-    """Get user input for stock symbol."""
-    user_stock = ""
-    if 'stock' not in st.session_state:
-        user_stock = st.text_input(":blue[Enter a stock symbol:]", placeholder="eg IBM")
-        if user_stock:
-            st.session_state["stock"] = user_stock
+def get_user_input() -> str:
+    """
+    Prompt the user for a stock ticker symbol and store it in ``st.session_state``.
 
-    else:
-        user_stock = st.session_state.stock
-        st.text_input(":blue[Enter a stock symbol:]", value=user_stock, placeholder="eg IBM")
+    Returns
+    -------
+    str
+        The ticker symbol entered by the user (empty string if none).
+    """
+    STOCK_KEY = "stock"
 
+    # Retrieve the current value from session state, if any
+    current_stock: str = st.session_state.get(STOCK_KEY, "")
+
+    # Streamlit widget – the value argument pre‑populates the field
+    user_stock: str = st.text_input(
+        label="Enter a stock symbol:",
+        value=current_stock,
+        placeholder="e.g. IBM",
+    ).strip().upper()
+
+    # Update session state only when the user provides a non‑empty value
+    if user_stock:
+        st.session_state[STOCK_KEY] = user_stock
+    elif STOCK_KEY in st.session_state:
+        # Preserve the previous value if the input is cleared
+        user_stock = st.session_state[STOCK_KEY]
+
+    logging.info("get_user_input END with output %s", user_stock)
     return user_stock
 
 
