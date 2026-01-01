@@ -18,14 +18,22 @@ from stock_adv_prompts import (get_fundamental_analysis_prompt,
                                get_fundamental_analysis_review_prompt,
                                get_fundamental_analysis_improve_prompt)
 
-
 fin_analyst_agent = ChatOllama(model=FIN_MODEL, temperature=0, timeout=2400)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class FinAnalystAgent:
-    async def _perform_fundamental_analysis(self, stock_symbol: str) -> str:
+    def __init__(self, ticker: str):
+        """
+            Initializes the Financial Analyst Agent.
+
+               Args:
+                   ticker: Stock symbol (e.g., 'IBM')
+        """
+        self.ticker_symbol = ticker.upper()
+
+    async def _perform_fundamental_analysis(self, ) -> str:
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
             llm=ChatModel.from_name(SMALL_MODEL, timeout=3000),
@@ -116,7 +124,25 @@ class FinAnalystAgent:
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
 
-        prompt = f"Fetch the data for {stock_symbol} stock then perform a fundamental analysis"
+        prompt = (
+            f"""
+                        You are a Senior Financial Analyst specializing in fundamental Analysis for stock market. 
+                        Your task: produce an exceptional fundamental analysis report for {self.ticker_symbol} stock
+                         by iterating between research, analysis, and a focused quality review. Follow these steps exactly:
+
+                        Research — fetch fundamental stock data and info.
+                        Initial Analysis — produce a concise, structured fundamental analysis report 
+                        Quality Review — perform a quality-review of the initial fundamental analysis report.
+                        Revision — apply the review's fixes and produce the final, improved fundamental analysis report.
+
+                        Constraints and rules:
+                        Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+                        Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
+                        Cite sources for all factual claims.
+                        Output: Return the revised final report to the user.
+                        Use "price as of" timestamps for any market data.
+
+                     """)
         logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
         agent_response = None
         try:
@@ -128,6 +154,6 @@ class FinAnalystAgent:
             logging.error(f"Error: {err.explain()}")
         return agent_response
 
-    async def analyse(self, stock_symbol) -> str:
-        fundamental_analysis = await self._perform_fundamental_analysis(stock_symbol)
+    async def analyze(self, ) -> str:
+        fundamental_analysis = await self._perform_fundamental_analysis()
         return fundamental_analysis

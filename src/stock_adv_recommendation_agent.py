@@ -14,6 +14,8 @@ from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
+
+from stock_adv_prompts import get_web_search_prompt
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,7 +32,6 @@ async def call_recommendation_agent(user_query: str):
             str: A helpful and clear response containing the recommendation.
         """
 
-
     web_search_agent = RequirementAgent(
         name="WebSearchAgent",
         llm=ChatModel.from_name(SMALL_MODEL),
@@ -38,32 +39,7 @@ async def call_recommendation_agent(user_query: str):
             ThinkTool(),  # to reason
             WebSearchTool()
         ],
-        instructions="""
-                           You are a search agent tasked with performing an internet search using a search tool 
-                           and returning a concise summary of the most pertinent information to the user.
-
-                            Follow these steps to complete your task:
-                            
-                                Perform Initial Search:
-                                    Execute a search based on the user’s query using a reliable search tool.
-                                   
-                                Filter and Summarize Information:
-                                    Review the search results to filter out irrelevant or duplicate information.
-                                    Summarize the relevant findings, ensuring the summary:
-                                        Is concise and to the point.
-                                        Covers all key points from the scraped content.
-                                        Maintains clarity and coherence.
-                                    For each scraped page, create a brief summary that captures the essential information.
-                                    Combine these individual summaries into an overall summary that provides a comprehensive 
-                                    overview of the search results.
-                            
-                                Return Results to User:
-                                    Format the summarized information into a readable format, such as:
-                                        A list of bullet points.
-                                        A short paragraph.
-                                    Deliver the formatted summary back to the user promptly, ensuring it is easy to understand and actionable.
-
-                          """,
+        instructions=get_web_search_prompt(),
         requirements=[
             ConditionalRequirement(ThinkTool, force_at_step=1),
             ConditionalRequirement(WebSearchTool, min_invocations=1),

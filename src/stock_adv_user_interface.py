@@ -67,14 +67,14 @@ def update_chat_history(input: Any, result: Any) -> None:
 
 async def generate_report(user_stock: str):
     """Generate and display the report."""
-    report_generator = ReportGeneratorAgent()
+    report_generator = ReportGeneratorAgent(user_stock)
     #generated_report = await report_generator.generate_report(user_stock)
     if 'generated_report' not in st.session_state:
         try:
-            generated_report = await asyncio.create_task(report_generator.generate_report(user_stock))
+            generated_report = await asyncio.create_task(report_generator.generate_report())
         except RuntimeError:
             # No loop – start a fresh one
-            generated_report = await asyncio.run(report_generator.generate_report(user_stock))
+            generated_report = await asyncio.run(report_generator.generate_report())
         if generated_report:
             st.session_state["generated_report"] = generated_report
     else:
@@ -102,9 +102,6 @@ async def create_interface(user_stock):
                 current_input = st.session_state.stock
             # A new report is generated when user has changed stock symbol or when there is not an existing one
             if (current_input and current_input is not user_stock) or ('generated_report' not in st.session_state):
-                logging.info(f"*****current_input = {current_input} and user_stock ={user_stock}/// {current_input and current_input is not user_stock}")
-                logging.info(
-                    f"*****('generated_report' not in st.session_state) = {('generated_report' not in st.session_state)}")
                 generated_report = await generate_report(user_stock)
             else:
                 generated_report = st.session_state.generated_report

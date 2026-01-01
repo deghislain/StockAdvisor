@@ -24,6 +24,7 @@ class NewsSearcher:
             - 'news': Recent financial news articles
             - 'social': Social media posts and forum discussions
         """
+        logging.info(f"************************search start with input: {ticker}*****************")
         report = {
             "ticker": ticker.upper(),
             "timestamp": datetime.now().isoformat(),

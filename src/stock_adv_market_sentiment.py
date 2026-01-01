@@ -1,3 +1,162 @@
 """Gathers and analyzes market sentiment from news and social media.The MarketSentiment module analyzes recent
 news articles, social media posts, and analyst opinions related to the stock.
 It generates a sentiment score indicating whether the market sentiment is positive, negative, or neutral."""
+import asyncio
+
+from beeai_framework.agents.experimental import RequirementAgent
+from beeai_framework.agents.experimental.requirements.conditional import ConditionalRequirement
+from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
+from beeai_framework.tools.think import ThinkTool
+from stock_adv_web_search_tool import WebSearchTool
+from beeai_framework.backend import ChatModel
+from beeai_framework.tools.handoff import HandoffTool
+from beeai_framework.errors import FrameworkError
+from beeai_framework.tools import Tool
+from stock_adv_utils import SMALL_MODEL, FIN_MODEL
+
+from stock_adv_prompts import (get_web_search_prompt,
+                               get_market_sentiment_analysis_prompt,
+                               get_market_sentiment_analysis_review_prompt,
+                               get_market_sentiment_analysis_improve_prompt)
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+class StockMarketSentimentAnalyzer:
+    def __init__(self, ticker: str):
+        """
+            Initializes the Market Sentiment Analyzer.
+
+               Args:
+                   ticker: Stock symbol (e.g., 'IBM')
+        """
+        self.ticker_symbol = ticker.upper()
+
+    async def _perform_market_sentiment_analysis(self) -> str:
+        web_search_agent = RequirementAgent(
+            name="WebSearchAgent",
+            llm=ChatModel.from_name(SMALL_MODEL),
+            tools=[
+                ThinkTool(),  # to reason
+                WebSearchTool()
+            ],
+            instructions=get_web_search_prompt(),
+            requirements=[
+                ConditionalRequirement(ThinkTool, force_at_step=1),
+                ConditionalRequirement(WebSearchTool, min_invocations=1),
+            ])
+        financial_analyst_agent = RequirementAgent(
+            name="FinancialAnalystAgent",
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            tools=[
+                ThinkTool(),  # to reason
+            ],
+            instructions=get_market_sentiment_analysis_prompt(),
+            requirements=[
+                ConditionalRequirement(ThinkTool, force_at_step=1),
+            ],
+        )
+        quality_check_agent = RequirementAgent(
+            name="QualityCheckAgent",
+            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            tools=[
+                ThinkTool(),  # to reason
+            ],
+            instructions=get_market_sentiment_analysis_review_prompt(),
+            requirements=[
+                ConditionalRequirement(ThinkTool, force_at_step=1),
+            ],
+        )
+        market_sentiment_analysis_enhancer_agent = RequirementAgent(
+            name="MarketSentimentAnalysisEnhancerAgent",
+            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            tools=[
+                ThinkTool(),  # to reason
+            ],
+            instructions=get_market_sentiment_analysis_improve_prompt(),
+            requirements=[
+                ConditionalRequirement(ThinkTool, force_at_step=1),
+            ],
+        )
+        main_agent = RequirementAgent(
+            name="MainAgent",
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=3000),
+            tools=[
+                ThinkTool(),
+                HandoffTool(
+                    web_search_agent,
+                    name="WebSearchAgent",
+                    description="""Consult the Web Search Agent for recent news articles, social media posts, 
+                    and opinions for the provided stock.""",
+                ),
+                HandoffTool(
+                    financial_analyst_agent,
+                    name="FinancialAnalystAgent",
+                    description="""Consult the Financial Analyst Agent for market sentiment analysis using news and info
+                     fetched by the Web Search Agent.""",
+                ),
+                HandoffTool(
+                    quality_check_agent,
+                    name="QualityCheckAgent",
+                    description="""Consult the Quality Check Agent to review the market sentiment analysis written by 
+                             the Financial Analyst Agent using data retrieved by the Web Search Agent.""",
+                ),
+                HandoffTool(
+                    market_sentiment_analysis_enhancer_agent,
+                    name="MarketSentimentAnalysisEnhancerAgent",
+                    description="""Consult the Market Sentiment Analysis Enhancer Agent to improve 
+                            the market sentiment analysis written by the Financial Analyst Agent using 
+                            the feedback provided by the Quality Check Agent.""",
+                ),
+            ],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            # Log all tool calls to the console for easier debugging
+            middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
+        )
+        prompt = (
+            f"""
+                You are a Senior Financial Analyst specializing in Market Sentiment Analysis. 
+                Your task: produce an exceptional market-sentiment report for {self.ticker_symbol} stock by iterating between 
+                research, analysis, and a focused quality review. Follow these steps exactly:
+
+                Research — run a web search for recent recent news articles, social media posts,
+                and opinions for a given stock.
+                Initial Analysis — produce a concise, structured market-sentiment report 
+                Quality Review — perform a quality-review of the initial market-sentiment analysis report.
+                Revision — apply the quality-review's fixes and produce the final, improved Market 
+                Sentiment analysis report.
+            
+                Constraints and rules:
+                Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+                Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
+                Cite sources for all factual claims.
+                Output: Return the revised final market sentiment analysis report to the user.
+                Use "price as of" timestamps for any market data.
+
+             """)
+        logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
+        agent_response = None
+        try:
+            response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
+            agent_response = response.state.answer.text
+            logging.info(
+                f"...................................................Market Sentiment analysis {agent_response}")
+        except FrameworkError as err:
+            logging.error(f"Error: {err.explain()}")
+        return agent_response
+
+    async def analyze(self):
+        return await self._perform_market_sentiment_analysis()
+
+
+async def main():
+    ticker = "RGTI"
+    ms_analyzer = StockMarketSentimentAnalyzer(ticker)
+    market_sentiment_report = await ms_analyzer.analyze()
+    if market_sentiment_report:
+        print(market_sentiment_report)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
