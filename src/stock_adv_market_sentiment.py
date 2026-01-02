@@ -3,8 +3,8 @@ news articles, social media posts, and analyst opinions related to the stock.
 It generates a sentiment score indicating whether the market sentiment is positive, negative, or neutral."""
 import asyncio
 
-from beeai_framework.agents.experimental import RequirementAgent
-from beeai_framework.agents.experimental.requirements.conditional import ConditionalRequirement
+from beeai_framework.agents.requirement import RequirementAgent
+from beeai_framework.agents.requirement.requirements.conditional import ConditionalRequirement
 from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools.think import ThinkTool
 from stock_adv_web_search_tool import WebSearchTool
