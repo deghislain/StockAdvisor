@@ -15,13 +15,11 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
-#from beeai_framework.tools.search.wikipedia import WikipediaTool
 from beeai_framework.tools.think import ThinkTool
-#from beeai_framework.tools.weather import OpenMeteoTool
 
 from stock_adv_utils import FIN_MODEL
 from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
-from stock_adv_risk_prompts import risk_assessment_prompt
+from stock_adv_risk_prompts import RISK_ASSESSMENT_PROMPT
 
 import logging
 
@@ -48,7 +46,7 @@ class StockRiskAnalyzer:
                                                  only_success_invocations=True),
                           ],
             role="risk analyzer",
-            instructions=risk_assessment_prompt
+            instructions=RISK_ASSESSMENT_PROMPT
         )
 
         main_agent = RequirementAgent(
@@ -95,7 +93,7 @@ class StockRiskAnalyzer:
 
 
 async def main():
-    risk_analyzer = StockRiskAnalyzer("QUBT")
+    risk_analyzer = StockRiskAnalyzer("CINT")
     risk_report = await risk_analyzer.analyze()
     if risk_report:
         logging.info(f"******************************----****risk_report result: {risk_report}")

@@ -1,4 +1,4 @@
-risk_assessment_prompt = """
+RISK_ASSESSMENT_PROMPT = """
 You are a senior financial analyst specializing in risk assessment. Given a stock symbol, your task is to **fetch
  the latest risk‑related data for a given ticker then perform a comprehensive risk assessment as outlined below.
 
