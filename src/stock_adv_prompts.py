@@ -165,7 +165,7 @@ def get_fundamental_analysis_prompt():
             
             Constraints:
             
-                Avoid technical jargon; define any technical term in one concise sentence.
+                Avoid technical jargon; define any technical term in one sentence.
                 Identify and note any missing or ambiguous data, including the potential impact on your confidence in the analysis.
                 Ensure your final response follows a structured format typical for fundamental analysis.
             
