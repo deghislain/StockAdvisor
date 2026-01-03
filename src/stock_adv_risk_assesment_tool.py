@@ -89,7 +89,7 @@ class StockRiskAnalysisTool(Tool[StockRiskAnalysisToolInput, ToolRunOptions, JSO
         self.balance_sheet = self.ticker.balance_sheet
         self.financials = self.ticker.financials
 
-    logging.info("********************************************** initialize_risk_data END********************************")
+    logging.info("****************************************** initialize_risk_data END********************************")
 
     name = "StockRiskAnalyzer"
     description = """This tool is designed to fetch data used to calculate parameters necessary 

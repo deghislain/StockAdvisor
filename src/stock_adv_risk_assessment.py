@@ -19,7 +19,9 @@ from beeai_framework.tools.think import ThinkTool
 
 from stock_adv_utils import FIN_MODEL
 from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
-from stock_adv_risk_instructions import RISK_ASSESSMENT_INSTRUCTIONS
+from stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
+                                         RISK_ASSESSMENT_REVIEW_INSTRUCTIONS)
+from stock_adv_prompts import get_stock_risk_assessment_prompt
 
 import logging
 
@@ -48,6 +50,13 @@ class StockRiskAnalyzer:
             role="risk analyzer",
             instructions=RISK_ASSESSMENT_INSTRUCTIONS
         )
+        quality_check_agent = RequirementAgent(
+            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            tools=[ThinkTool()],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            role="quality checker",
+            instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
+        )
 
         main_agent = RequirementAgent(
             name="MainAgent",
@@ -59,6 +68,12 @@ class StockRiskAnalyzer:
                     name="RiskAssessmentAgent",
                     description="Consult the Risk Assessment Agent for risk analysis given a stock symbol.",
                 ),
+                HandoffTool(
+                    quality_check_agent,
+                    name="QualityCheckAgent",
+                    description="""Consult the Quality Check Agent to review the risk analysis produce by 
+                                            the Risk Assessment Agent.""",
+                ),
 
             ],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
@@ -66,13 +81,7 @@ class StockRiskAnalyzer:
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
 
-        prompt = (
-            f"""
-                              You are a Senior Financial Analyst specializing in Risk Analysis for stock market. 
-                              Your task: produce an exceptional risk analysis report for {self.ticker_symbol} stock.
-                             
-
-                           """)
+        prompt = get_stock_risk_assessment_prompt(self.ticker_symbol)
         logging.info(f"******************************************User: {prompt}")
         agent_response = None
         try:
