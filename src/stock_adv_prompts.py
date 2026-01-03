@@ -106,11 +106,18 @@ def get_stock_market_sent_analysis_prompt(ticker: str) -> str:
 
 def get_stock_risk_assessment_prompt(ticker: str) -> str:
     return f"""
-            You are a Senior Financial Analyst specializing in risk Analysis for stock market. 
-            Your task: produce an exceptional risk analysis report for {ticker} stock
+            You are a Senior Financial Analyst specializing in risk assessment for stock market. 
+            Your task: produce an exceptional risk assessment report for {ticker} stock
              by iterating between analysis, and a focused quality review. Follow these steps exactly:
 
-            Initial Analysis — Fetch risk-related stock's data then produce a structured, risk analysis report 
-            Quality Review — perform a quality-review of the initial risk analysis report.
-           
+            Initial Analysis — Fetch risk-related stock's data then produce a structured, risk assessment report 
+            Quality Review — perform a quality-review of the initial risk assessment report.
+            Revision — apply the review's fixes and produce the final, improved risk assessment report.
+
+            Constraints and rules:
+            Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+            Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
+            Cite sources for all factual claims.
+            Output: Return the revised final report to the user.
+            Use "price as of" timestamps for any market data.
     """

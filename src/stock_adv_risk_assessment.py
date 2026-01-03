@@ -57,6 +57,13 @@ class StockRiskAnalyzer:
             role="quality checker",
             instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
         )
+        risk_assessment_enhancer_agent = RequirementAgent(
+            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            tools=[ThinkTool()],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            role="quality checker",
+            instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
+        )
 
         main_agent = RequirementAgent(
             name="MainAgent",
@@ -73,6 +80,13 @@ class StockRiskAnalyzer:
                     name="QualityCheckAgent",
                     description="""Consult the Quality Check Agent to review the risk analysis produce by 
                                             the Risk Assessment Agent.""",
+                ),
+                HandoffTool(
+                    risk_assessment_enhancer_agent,
+                    name="RiskAssessmentEnhancerAgent",
+                    description="""Consult the Risk Assessment Enhancer Agent to improve 
+                                        the risk assessment produce by the Financial Analyst Agent using 
+                                        the feedback provided by the Quality Check  Agent.""",
                 ),
 
             ],
@@ -102,7 +116,7 @@ class StockRiskAnalyzer:
 
 
 async def main():
-    risk_analyzer = StockRiskAnalyzer("CINT")
+    risk_analyzer = StockRiskAnalyzer("SKKY")
     risk_report = await risk_analyzer.analyze()
     if risk_report:
         logging.info(f"******************************----****risk_report result: {risk_report}")
