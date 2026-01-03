@@ -14,9 +14,11 @@ from beeai_framework.tools.handoff import HandoffTool
 from stock_adv_utils import SMALL_MODEL, FIN_MODEL
 from beeai_framework.tools.think import ThinkTool
 from stock_adv_data_fetcher_tool import DataFetcherTool
-from stock_adv_prompts import (get_fundamental_analysis_prompt,
-                               get_fundamental_analysis_review_prompt,
-                               get_fundamental_analysis_improve_prompt)
+from stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
+                                             FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
+                                             FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
+
+from stock_adv_prompts import get_stock_analysis_prompt
 
 fin_analyst_agent = ChatOllama(model=FIN_MODEL, temperature=0, timeout=2400)
 
@@ -56,7 +58,7 @@ class FinAnalystAgent:
                 ThinkTool(),  # to reason
             ],
             # instructions=""" Provide a fundamental analysis given stock's data""",
-            instructions=get_fundamental_analysis_prompt(),
+            instructions=FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -69,7 +71,7 @@ class FinAnalystAgent:
                 ThinkTool(),  # to reason
             ],
             # instructions=""" Provide a fundamental analysis given stock's data""",
-            instructions=get_fundamental_analysis_review_prompt(),
+            instructions=FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -82,7 +84,7 @@ class FinAnalystAgent:
                 ThinkTool(),  # to reason
             ],
             # instructions=""" Provide a fundamental analysis given stock's data""",
-            instructions=get_fundamental_analysis_improve_prompt(),
+            instructions=FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -124,25 +126,7 @@ class FinAnalystAgent:
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
 
-        prompt = (
-            f"""
-                        You are a Senior Financial Analyst specializing in fundamental Analysis for stock market. 
-                        Your task: produce an exceptional fundamental analysis report for {self.ticker_symbol} stock
-                         by iterating between research, analysis, and a focused quality review. Follow these steps exactly:
-
-                        Research — fetch fundamental stock data and info.
-                        Initial Analysis — produce a concise, structured fundamental analysis report 
-                        Quality Review — perform a quality-review of the initial fundamental analysis report.
-                        Revision — apply the review's fixes and produce the final, improved fundamental analysis report.
-
-                        Constraints and rules:
-                        Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
-                        Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
-                        Cite sources for all factual claims.
-                        Output: Return the revised final report to the user.
-                        Use "price as of" timestamps for any market data.
-
-                     """)
+        prompt = get_stock_analysis_prompt(self.ticker_symbol)
         logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
         agent_response = None
         try:

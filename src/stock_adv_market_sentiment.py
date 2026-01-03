@@ -14,10 +14,12 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 from stock_adv_utils import SMALL_MODEL, FIN_MODEL
 
-from stock_adv_prompts import (get_web_search_prompt,
-                               get_market_sentiment_analysis_prompt,
-                               get_market_sentiment_analysis_review_prompt,
-                               get_market_sentiment_analysis_improve_prompt)
+from stock_adv_market_sent_analysis_instructions import (WEB_SEARCH_INSTRUCTIONS,
+                                                         MARKET_SENT_ANALYSIS_INSTRUCTIONS,
+                                                         MARKET_SENT_ANALYSIS_REVIEW_INSTRUCTIONS,
+                                                         MARKET_SENT_ANALYSIS_IMPROVE_INSTRUCTIONS)
+
+from stock_adv_prompts import get_stock_market_sent_analysis_prompt
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,7 +43,7 @@ class StockMarketSentimentAnalyzer:
                 ThinkTool(),  # to reason
                 WebSearchTool()
             ],
-            instructions=get_web_search_prompt(),
+            instructions=WEB_SEARCH_INSTRUCTIONS,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
                 ConditionalRequirement(WebSearchTool, min_invocations=1),
@@ -52,7 +54,7 @@ class StockMarketSentimentAnalyzer:
             tools=[
                 ThinkTool(),  # to reason
             ],
-            instructions=get_market_sentiment_analysis_prompt(),
+            instructions=MARKET_SENT_ANALYSIS_INSTRUCTIONS,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -63,7 +65,7 @@ class StockMarketSentimentAnalyzer:
             tools=[
                 ThinkTool(),  # to reason
             ],
-            instructions=get_market_sentiment_analysis_review_prompt(),
+            instructions=MARKET_SENT_ANALYSIS_REVIEW_INSTRUCTIONS,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -74,7 +76,7 @@ class StockMarketSentimentAnalyzer:
             tools=[
                 ThinkTool(),  # to reason
             ],
-            instructions=get_market_sentiment_analysis_improve_prompt(),
+            instructions=MARKET_SENT_ANALYSIS_IMPROVE_INSTRUCTIONS,
             requirements=[
                 ConditionalRequirement(ThinkTool, force_at_step=1),
             ],
@@ -114,27 +116,7 @@ class StockMarketSentimentAnalyzer:
             # Log all tool calls to the console for easier debugging
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
-        prompt = (
-            f"""
-                You are a Senior Financial Analyst specializing in Market Sentiment Analysis. 
-                Your task: produce an exceptional market-sentiment report for {self.ticker_symbol} stock by iterating between 
-                research, analysis, and a focused quality review. Follow these steps exactly:
-
-                Research — run a web search for recent recent news articles, social media posts,
-                and opinions for a given stock.
-                Initial Analysis — produce a concise, structured market-sentiment report 
-                Quality Review — perform a quality-review of the initial market-sentiment analysis report.
-                Revision — apply the quality-review's fixes and produce the final, improved Market 
-                Sentiment analysis report.
-            
-                Constraints and rules:
-                Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
-                Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
-                Cite sources for all factual claims.
-                Output: Return the revised final market sentiment analysis report to the user.
-                Use "price as of" timestamps for any market data.
-
-             """)
+        prompt = get_stock_market_sent_analysis_prompt(self.ticker_symbol)
         logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
         agent_response = None
         try:

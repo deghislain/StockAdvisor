@@ -19,7 +19,7 @@ from beeai_framework.tools.think import ThinkTool
 
 from stock_adv_utils import FIN_MODEL
 from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
-from stock_adv_risk_prompts import RISK_ASSESSMENT_PROMPT
+from stock_adv_risk_instructions import RISK_ASSESSMENT_INSTRUCTIONS
 
 import logging
 
@@ -46,7 +46,7 @@ class StockRiskAnalyzer:
                                                  only_success_invocations=True),
                           ],
             role="risk analyzer",
-            instructions=RISK_ASSESSMENT_PROMPT
+            instructions=RISK_ASSESSMENT_INSTRUCTIONS
         )
 
         main_agent = RequirementAgent(
