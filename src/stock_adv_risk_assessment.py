@@ -20,7 +20,8 @@ from beeai_framework.tools.think import ThinkTool
 from stock_adv_utils import FIN_MODEL
 from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
 from stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
-                                         RISK_ASSESSMENT_REVIEW_INSTRUCTIONS)
+                                         RISK_ASSESSMENT_REVIEW_INSTRUCTIONS,
+                                         RISK_ASSESSMENT_IMPROVE_INSTRUCTIONS)
 from stock_adv_prompts import get_stock_risk_assessment_prompt
 
 import logging
@@ -61,8 +62,8 @@ class StockRiskAnalyzer:
             llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
             tools=[ThinkTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
-            role="quality checker",
-            instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
+            role="risk assessment enhancer",
+            instructions=RISK_ASSESSMENT_IMPROVE_INSTRUCTIONS
         )
 
         main_agent = RequirementAgent(
@@ -101,7 +102,7 @@ class StockRiskAnalyzer:
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
             if response:
-                agent_response = response.last_message.text
+                agent_response = response.state.answer.text
 
         except FrameworkError as err:
             print("Error:", err.explain())
@@ -116,7 +117,7 @@ class StockRiskAnalyzer:
 
 
 async def main():
-    risk_analyzer = StockRiskAnalyzer("SKKY")
+    risk_analyzer = StockRiskAnalyzer("AUID")
     risk_report = await risk_analyzer.analyze()
     if risk_report:
         logging.info(f"******************************----****risk_report result: {risk_report}")

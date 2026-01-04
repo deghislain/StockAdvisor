@@ -70,7 +70,7 @@ def get_stock_analysis_prompt(ticker: str) -> str:
             Research — fetch fundamental stock data and info.
             Initial Analysis — produce a detailed, structured fundamental analysis report 
             Quality Review — perform a quality-review of the initial fundamental analysis report.
-            Revision — apply the review's fixes and produce the final, improved fundamental analysis report.
+            Revision — apply the quality-review's fixes and produce the final, improved fundamental analysis report.
 
             Constraints and rules:
             Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
@@ -112,7 +112,7 @@ def get_stock_risk_assessment_prompt(ticker: str) -> str:
 
             Initial Analysis — Fetch risk-related stock's data then produce a structured, risk assessment report 
             Quality Review — perform a quality-review of the initial risk assessment report.
-            Revision — apply the review's fixes and produce the final, improved risk assessment report.
+            Revision — apply the quality-review's fixes and produce the final, improved risk analysis report.
 
             Constraints and rules:
             Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
@@ -120,4 +120,5 @@ def get_stock_risk_assessment_prompt(ticker: str) -> str:
             Cite sources for all factual claims.
             Output: Return the revised final report to the user.
             Use "price as of" timestamps for any market data.
+            
     """
