@@ -15,13 +15,9 @@ from beeai_framework.errors import FrameworkError
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 if __name__ == "__main__":
-    placeholder = st.empty()
-    placeholder.info("Running Generating Report… please wait.")
-
-
     async def main():
         try:
-            with st.spinner(":green[In progress...]"):
+            with st.spinner(":green[Generating Report In Progress.................. please wait.]"):
 
                 start = datetime.now()
                 logging.info(f"--- Start Time = {start:%H:%M:%S} ---")
