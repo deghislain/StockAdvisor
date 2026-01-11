@@ -15,7 +15,7 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
 
-from stock_adv_prompts import get_web_search_prompt
+from stock_adv_market_sent_analysis_instructions import WEB_SEARCH_INSTRUCTIONS
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,7 +39,7 @@ async def call_recommendation_agent(user_query: str):
             ThinkTool(),  # to reason
             WebSearchTool()
         ],
-        instructions=get_web_search_prompt(),
+        instructions=WEB_SEARCH_INSTRUCTIONS,
         requirements=[
             ConditionalRequirement(ThinkTool, force_at_step=1),
             ConditionalRequirement(WebSearchTool, min_invocations=1),

@@ -3,12 +3,12 @@ Triggers the DataFetcher module to gather real-time data for the specified stock
 import asyncio
 
 import streamlit as st
-
+import logging
 from typing import Dict, Any
 
 from stock_adv_agent import get_recommendation_agent_response
 from stock_adv_report_generator import ReportGeneratorAgent
-import logging
+from stock_adv_technical_analysis import perform_tech_analysis
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -90,9 +90,40 @@ def get_user_questions():
     return None
 
 
-async def create_interface(user_stock):
-    """Create the user interface and handle interactions."""
-    if st.button("Generate Report") or user_stock:
+def get_user_input() -> str:
+    """
+    Prompt the user for a stock ticker symbol and store it in ``st.session_state``.
+
+    Returns
+    -------
+    str
+        The ticker symbol entered by the user (empty string if none).
+    """
+    STOCK_KEY = "stock"
+
+    # Retrieve the current value from session state, if any
+    current_stock: str = st.session_state.get(STOCK_KEY, "")
+
+    # Streamlit widget – the value argument pre‑populates the field
+    user_stock: str = st.text_input(
+        label="Enter a stock symbol:",
+        value=current_stock,
+        placeholder="e.g. IBM",
+    ).strip().upper()
+
+    # Update session state only when the user provides a non‑empty value
+    if user_stock:
+        st.session_state[STOCK_KEY] = user_stock
+    elif STOCK_KEY in st.session_state:
+        # Preserve the previous value if the input is cleared
+        user_stock = st.session_state[STOCK_KEY]
+
+    logging.info("get_user_input END with output %s", user_stock)
+    return user_stock
+
+
+async def perform_fundamental_analysis(user_stock: str):
+    if st.button("Generate Report"):
         if user_stock:
             logging.info(
                 f"---------------------------------------------Generating report for: {user_stock}**********************")
@@ -118,3 +149,20 @@ async def create_interface(user_stock):
             display_chat_history()
         else:
             st.write("Enter a stock symbol please")
+
+
+async def create_interface():
+    """Create the user interface and handle interactions."""
+    logging.info("**************------------------****************create_interface START")
+    user_stock = get_user_input()
+
+    tab1, tab2 = st.tabs(["Fundamental analysis", "Technical analysis"])
+    with tab1:
+        st.header("Fundamental Analysis")
+        # if 'generated_report' not in st.session_state:
+        await perform_fundamental_analysis(user_stock)
+    with tab2:
+        st.header("Technical analysis")
+        await perform_tech_analysis(user_stock)
+
+    logging.info("**************------------------****************create_interface END")
