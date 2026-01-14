@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 if __name__ == "__main__":
     async def main():
         try:
-            with st.spinner(":green[Generating Report In Progress.................. please wait.]"):
+            with st.spinner(":green[Generating Report.................. please wait.]"):
 
                 start = datetime.now()
                 logging.info(f"--- Start Time = {start:%H:%M:%S} ---")

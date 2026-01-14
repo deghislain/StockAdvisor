@@ -106,7 +106,7 @@ def get_user_input() -> str:
 
     # Streamlit widget – the value argument pre‑populates the field
     user_stock: str = st.text_input(
-        label="Enter a stock symbol:",
+        label="blue[Enter a stock symbol:]",
         value=current_stock,
         placeholder="e.g. IBM",
     ).strip().upper()
