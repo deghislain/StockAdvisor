@@ -100,19 +100,19 @@ class FinAnalystAgent:
                 ),
                 HandoffTool(
                     financial_analyst_agent,
-                    name="FinancialAnalystAgent",
+                    name="FinancialAnalysis",
                     description="""Consult the Financial Analyst Agent for fundamental analysis using data fetched
                          by the Data Fetcher Agent.""",
                 ),
                 HandoffTool(
                     quality_check_agent,
-                    name="QualityCheckAgent",
+                    name="QualityChecking",
                     description="""Consult the Quality Check Agent to review the fundamental analysis written by 
                         the Financial Analyst Agent using data retrieved by the Data Fetcher Agent.""",
                 ),
                 HandoffTool(
                     fundamental_analysis_enhancer_agent,
-                    name="FundamentalAnalysisEnhancerAgent",
+                    name="FundamentalAnalysisEnhancement",
                     description="""Consult the Fundamental Analysis Enhancer Agent to improve 
                     the fundamental analysis written by the Financial Analyst Agent using 
                     the feedback provided by the Quality Check  Agent.""",

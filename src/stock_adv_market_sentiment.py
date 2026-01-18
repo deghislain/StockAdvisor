@@ -94,19 +94,19 @@ class StockMarketSentimentAnalyzer:
                 ),
                 HandoffTool(
                     financial_analyst_agent,
-                    name="FinancialAnalystAgent",
+                    name="FinancialAnalysis",
                     description="""Consult the Financial Analyst Agent for market sentiment analysis using news and info
                      fetched by the Web Search Agent.""",
                 ),
                 HandoffTool(
                     quality_check_agent,
-                    name="QualityCheckAgent",
+                    name="QualityChecking",
                     description="""Consult the Quality Check Agent to review the market sentiment analysis written by 
                              the Financial Analyst Agent using data retrieved by the Web Search Agent.""",
                 ),
                 HandoffTool(
                     market_sentiment_analysis_enhancer_agent,
-                    name="MarketSentimentAnalysisEnhancerAgent",
+                    name="MarketSentimentAnalysisEnhancement",
                     description="""Consult the Market Sentiment Analysis Enhancer Agent to improve 
                             the market sentiment analysis written by the Financial Analyst Agent using 
                             the feedback provided by the Quality Check Agent.""",

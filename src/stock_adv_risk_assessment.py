@@ -73,18 +73,18 @@ class StockRiskAnalyzer:
                 ThinkTool(),
                 HandoffTool(
                     risk_assessment_agent,
-                    name="RiskAssessmentAgent",
+                    name="RiskAssessment",
                     description="Consult the Risk Assessment Agent for risk analysis given a stock symbol.",
                 ),
                 HandoffTool(
                     quality_check_agent,
-                    name="QualityCheckAgent",
+                    name="QualityChecking",
                     description="""Consult the Quality Check Agent to review the risk analysis produce by 
                                             the Risk Assessment Agent.""",
                 ),
                 HandoffTool(
                     risk_assessment_enhancer_agent,
-                    name="RiskAssessmentEnhancerAgent",
+                    name="RiskAssessmentEnhance",
                     description="""Consult the Risk Assessment Enhancer Agent to improve 
                                         the risk assessment produce by the Financial Analyst Agent using 
                                         the feedback provided by the Quality Check  Agent.""",
