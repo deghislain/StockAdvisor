@@ -84,6 +84,13 @@ class ReportGeneratorAgent:
             role="Report Reviewer",
             instructions=REPORT_REVIEWER_INSTRUCTIONS,
         )
+        report_refiner = RequirementAgent(
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=6000),
+            tools=[ThinkTool(), ],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            role="Report Refiner",
+            instructions="You are a senior financial analyst specializing in writing report for stock investors.",
+        )
 
         main_agent = RequirementAgent(
             name="MainAgent",
@@ -100,7 +107,11 @@ class ReportGeneratorAgent:
                     name="ReportReview",
                     description="Consult the Report Reviewer Agent for report review.",
                 ),
-
+                HandoffTool(
+                    report_refiner,
+                    name="ReportEnhancement",
+                    description="Consult the Report Refiner Agent for report refinement and improvement.",
+                ),
 
             ],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],

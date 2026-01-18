@@ -73,7 +73,7 @@ def get_stock_analysis_prompt(ticker: str) -> str:
             Revision — apply the quality-review's fixes and produce the final, improved fundamental analysis report.
 
             Constraints and rules:
-            Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+            Use detailed, data-driven language and quantify claims where possible. Flag uncertainties.
             Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
             Cite sources for all factual claims.
             Output: Return the revised final report to the user.
@@ -95,7 +95,7 @@ def get_stock_market_sent_analysis_prompt(ticker: str) -> str:
                 Sentiment analysis report.
             
                 Constraints and rules:
-                Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+                Use detailed, data-driven language and quantify claims where possible. Flag uncertainties.
                 Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
                 Cite sources for all factual claims.
                 Output: Return the revised final market sentiment analysis report to the user.
@@ -115,7 +115,7 @@ def get_stock_risk_assessment_prompt(ticker: str) -> str:
             Revision — apply the quality-review's fixes and produce the final, improved risk analysis report.
 
             Constraints and rules:
-            Use concise, data-driven language and quantify claims where possible. Flag uncertainties.
+            Use detailed, data-driven language and quantify claims where possible. Flag uncertainties.
             Do not fabricate numbers; if data is unavailable, state which inputs were missing and why.
             Cite sources for all factual claims.
             Output: Return the revised final report to the user.
@@ -138,6 +138,9 @@ def get_final_report_prompt(initial_report: str):
 
                 Quality Review:
                     Perform a comprehensive quality review of the initial draft report.
+                    
+                Revision:
+                    Apply the quality-review's fixes and produce the final, improved report.
        
 
                 Output:
