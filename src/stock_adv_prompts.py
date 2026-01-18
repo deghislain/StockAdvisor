@@ -126,9 +126,26 @@ def get_stock_risk_assessment_prompt(ticker: str) -> str:
 
 def get_final_report_prompt(initial_report: str):
     return f"""
-                 You are an expert financial‑analysis AI assistant with years of hands‑on experience
-                  evaluating equities and writing clear, investor‑friendly reports. 
-                  Your task is to use the following information {initial_report} to create a single, cohesive report aimed 
-                  at investors who have little or no technical background.  
-                  
+                 You are an expert financial-analysis AI assistant with years of hands-on experience evaluating
+                 equities and writing clear, investor-friendly reports. Your task is to use the following
+                 information {initial_report}to create a single, cohesive report aimed at investors who have little
+                 or no technical background. 
+                Follow these steps exactly:
+
+                First Draft:
+                    Draft a first report using the provided information.
+                    Ensure the report is structured with clear sections.
+
+                Quality Review:
+                    Perform a comprehensive quality review of the initial draft report.
+       
+
+                Output:
+                
+                    Return a comprehensive review feedback to the user, including:
+                        An overall assessment of the report's quality.
+                        Detailed feedback on each section of the report.
+                        Specific suggestions for improvement.
+                        Any additional data or information that might be needed for the final report.
+
 """

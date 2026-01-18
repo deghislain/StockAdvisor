@@ -20,7 +20,7 @@ from stock_adv_analysis_engine import FinAnalystAgent
 from stock_adv_market_sentiment import StockMarketSentimentAnalyzer
 from stock_adv_risk_assessment import StockRiskAnalyzer
 from stock_adv_utils import FIN_MODEL, SMALL_MODEL
-from stock_adv_report_instructions import REPORT_WRITER_INSTRUCTIONS
+from stock_adv_report_instructions import REPORT_WRITER_INSTRUCTIONS, REPORT_REVIEWER_INSTRUCTIONS
 from stock_adv_prompts import get_final_report_prompt
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -77,6 +77,13 @@ class ReportGeneratorAgent:
             role="Report Writer",
             instructions=REPORT_WRITER_INSTRUCTIONS,
         )
+        report_reviewer = RequirementAgent(
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            tools=[ThinkTool(), ],
+            requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
+            role="Report Reviewer",
+            instructions=REPORT_REVIEWER_INSTRUCTIONS,
+        )
 
         main_agent = RequirementAgent(
             name="MainAgent",
@@ -88,7 +95,11 @@ class ReportGeneratorAgent:
                     name="ReportWriting",
                     description="Consult the Report Writer Agent for report writing.",
                 ),
-
+                HandoffTool(
+                    report_reviewer,
+                    name="ReportReview",
+                    description="Consult the Report Reviewer Agent for report review.",
+                ),
 
 
             ],
@@ -133,24 +144,6 @@ class ReportGeneratorAgent:
             logging.info(f"******************************generate_report ENDS with output: {self.generated_report}")
             self.report_queue.task_done()
             return self.generated_report
-
-
-'''
-    async def generate_report(self, ):
-        logging.info(f"******************************generate_report START with input: {self.stock_symbol}")
-
-        if self.stock_symbol:
-            self.fund_analysis = await self._perform_fundamental_analysis()
-        if self.stock_symbol:
-            self.market_sentiment_analysis = await self._perform_market_sentiment_analysis()
-
-        if self.fund_analysis and self.market_sentiment_analysis:
-            self.fund_analysis = "{}\n\n\n".format(self.fund_analysis)
-            self.generated_report = f"{self.fund_analysis} {self.market_sentiment_analysis}"
-
-        if self.generated_report:
-            return self.generated_report
-'''
 
 
 async def main():

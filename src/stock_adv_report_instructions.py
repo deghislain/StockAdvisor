@@ -87,7 +87,8 @@ REPORT_REVIEWER_INSTRUCTIONS = """
     Analytical Consistency (Weight: 25%)
     
         Cross-validate data points: Ensure that all data points are consistent across different sections.
-        Check logical coherence of arguments: Verify that the arguments and conclusions are logically sound and supported by data.
+        Check logical coherence of arguments: Verify that the arguments and conclusions are logically sound
+         and supported by data.
     
     Bias Detection (Weight: 20%)
     
