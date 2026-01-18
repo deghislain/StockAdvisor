@@ -61,7 +61,7 @@ class StockMarketSentimentAnalyzer:
         )
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -72,7 +72,7 @@ class StockMarketSentimentAnalyzer:
         )
         market_sentiment_analysis_enhancer_agent = RequirementAgent(
             name="MarketSentimentAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -83,7 +83,7 @@ class StockMarketSentimentAnalyzer:
         )
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=3000),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -121,7 +121,9 @@ class StockMarketSentimentAnalyzer:
         agent_response = None
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            agent_response = response.state.answer.text
+            risk_market_sent_report = response.last_message.text
+            if risk_market_sent_report:
+                agent_response = risk_market_sent_report
             logging.info(
                 f"...................................................Market Sentiment analysis {agent_response}")
         except FrameworkError as err:

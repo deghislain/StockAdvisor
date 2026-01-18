@@ -41,7 +41,7 @@ class StockRiskAnalyzer:
 
     async def _perform_risk_analysis(self, ) -> str:
         risk_assessment_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[ThinkTool(), StockRiskAnalysisTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1),
                           ConditionalRequirement(StockRiskAnalysisTool, min_invocations=1, max_invocations=1,
@@ -52,14 +52,14 @@ class StockRiskAnalyzer:
             instructions=RISK_ASSESSMENT_INSTRUCTIONS
         )
         quality_check_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[ThinkTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="quality checker",
             instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
         )
         risk_assessment_enhancer_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[ThinkTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="risk assessment enhancer",
@@ -68,7 +68,7 @@ class StockRiskAnalyzer:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=12000),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -101,8 +101,9 @@ class StockRiskAnalyzer:
         agent_response = None
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            if response:
-                agent_response = response.state.answer.text
+            risk_analysis_report = response.last_message.text
+            if risk_analysis_report:
+                agent_response = risk_analysis_report
 
         except FrameworkError as err:
             print("Error:", err.explain())

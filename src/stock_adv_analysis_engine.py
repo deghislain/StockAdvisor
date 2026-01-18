@@ -20,8 +20,6 @@ from stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
 
 from stock_adv_prompts import get_stock_analysis_prompt
 
-fin_analyst_agent = ChatOllama(model=FIN_MODEL, temperature=0, timeout=2400)
-
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -38,7 +36,7 @@ class FinAnalystAgent:
     async def _perform_fundamental_analysis(self, ) -> str:
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=3000),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
                 DataFetcherTool()
@@ -66,7 +64,7 @@ class FinAnalystAgent:
 
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -79,7 +77,7 @@ class FinAnalystAgent:
 
         fundamental_analysis_enhancer_agent = RequirementAgent(
             name="FundamentalAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=3000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -92,7 +90,7 @@ class FinAnalystAgent:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=6000),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -131,7 +129,11 @@ class FinAnalystAgent:
         agent_response = None
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            agent_response = response.state.answer.text
+            fund_analys_report = response.last_message.text
+
+            if fund_analys_report:
+                agent_response = fund_analys_report
+
             logging.info(
                 f"...................................................Fundamental analysis {agent_response}")
         except FrameworkError as err:

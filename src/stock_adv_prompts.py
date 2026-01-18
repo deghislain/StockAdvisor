@@ -122,3 +122,13 @@ def get_stock_risk_assessment_prompt(ticker: str) -> str:
             Use "price as of" timestamps for any market data.
             
     """
+
+
+def get_final_report_prompt(initial_report: str):
+    return f"""
+                 You are an expert financial‑analysis AI assistant with years of hands‑on experience
+                  evaluating equities and writing clear, investor‑friendly reports. 
+                  Your task is to use the following information {initial_report} to create a single, cohesive report aimed 
+                  at investors who have little or no technical background.  
+                  
+"""
