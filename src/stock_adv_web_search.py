@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 class NewsSearcher:
     """A small class that queries DuckDuckGo’s *news* vertical."""
 
-    def search(self, ticker: str, limit: int = 5) -> Dict[str, List[Dict[str, Any]]]:
+    def search(self, query: str, limit: int = 5) -> Dict[str, List[Dict[str, Any]]]:
         """
         Collects recent news articles, social media posts, and opinions for a given stock.
         Uses DuckDuckGo search engine as an aggregator (no API key required).
@@ -24,9 +24,9 @@ class NewsSearcher:
             - 'news': Recent financial news articles
             - 'social': Social media posts and forum discussions
         """
-        logging.info(f"************************search start with input: {ticker}*****************")
+        logging.info(f"************************search start with input: {query}*****************")
         report = {
-            "ticker": ticker.upper(),
+            "ticker": query,
             "timestamp": datetime.now().isoformat(),
             "news": [],
             "social": []
@@ -38,7 +38,7 @@ class NewsSearcher:
             # Using .news() for structured news results with source attribution
             try:
                 news_results = ddgs.news(
-                    keywords=f"{ticker} stock",
+                    keywords=f"{query}",
                     region="us-en",
                     max_results=limit
                 )
@@ -58,7 +58,7 @@ class NewsSearcher:
             # Using .text() with site: operators to target social platforms
             # This aggregates Reddit, StockTwits, and Twitter without needing their APIs
             try:
-                social_query = f'{ticker} stock (site:reddit.com OR site:stocktwits.com OR site:twitter.com)'
+                social_query = f'{query} (site:reddit.com OR site:stocktwits.com OR site:twitter.com)'
                 social_results = ddgs.text(
                     keywords=social_query,
                     region="wt-wt",
