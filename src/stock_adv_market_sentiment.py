@@ -50,7 +50,7 @@ class StockMarketSentimentAnalyzer:
             ])
         financial_analyst_agent = RequirementAgent(
             name="FinancialAnalystAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -61,7 +61,7 @@ class StockMarketSentimentAnalyzer:
         )
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -72,7 +72,7 @@ class StockMarketSentimentAnalyzer:
         )
         market_sentiment_analysis_enhancer_agent = RequirementAgent(
             name="MarketSentimentAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -83,7 +83,7 @@ class StockMarketSentimentAnalyzer:
         )
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000, temperature=0),
             tools=[
                 ThinkTool(),
                 HandoffTool(

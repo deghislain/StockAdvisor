@@ -51,7 +51,7 @@ class FinAnalystAgent:
 
         financial_analyst_agent = RequirementAgent(
             name="FinancialAnalystAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -64,7 +64,7 @@ class FinAnalystAgent:
 
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -77,7 +77,7 @@ class FinAnalystAgent:
 
         fundamental_analysis_enhancer_agent = RequirementAgent(
             name="FundamentalAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000),
+            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -90,7 +90,7 @@ class FinAnalystAgent:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000),
+            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000, temperature=0),
             tools=[
                 ThinkTool(),
                 HandoffTool(

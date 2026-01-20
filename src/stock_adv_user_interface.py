@@ -68,17 +68,9 @@ def update_chat_history(input: Any, result: Any) -> None:
 async def generate_report(user_stock: str):
     """Generate and display the report."""
     report_generator = ReportGeneratorAgent(user_stock)
-    #generated_report = await report_generator.generate_report(user_stock)
+    generated_report = None
     if 'generated_report' not in st.session_state:
-        try:
-            generated_report = await asyncio.create_task(report_generator.generate_report())
-        except RuntimeError:
-            # No loop – start a fresh one
-            generated_report = await asyncio.run(report_generator.generate_report())
-        if generated_report:
-            st.session_state["generated_report"] = generated_report
-    else:
-        generated_report = st.session_state.generated_report
+        generated_report = await report_generator.generate_report()
 
     return generated_report
 
