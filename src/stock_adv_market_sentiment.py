@@ -117,17 +117,39 @@ class StockMarketSentimentAnalyzer:
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
         prompt = get_stock_market_sent_analysis_prompt(self.ticker_symbol)
-        logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
+        logging.info(f"Starting market sentiment analysis for: {self.ticker_symbol}")
         agent_response = None
+        
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            risk_market_sent_report = response.last_message.text
-            if risk_market_sent_report:
-                agent_response = risk_market_sent_report
-            logging.info(
-                f"...................................................Market Sentiment analysis {agent_response}")
+            
+            # Safely extract the response
+            if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
+                risk_market_sent_report = response.last_message.text
+                
+                if risk_market_sent_report:
+                    agent_response = risk_market_sent_report
+                    logging.info(f"Market sentiment analysis completed successfully for {self.ticker_symbol}")
+                else:
+                    logging.warning(f"Empty market sentiment report for {self.ticker_symbol}")
+                    agent_response = f"Unable to generate market sentiment analysis for {self.ticker_symbol}. Please try again."
+            else:
+                logging.error("Unexpected response structure from market sentiment agent")
+                agent_response = f"Technical error occurred during market sentiment analysis for {self.ticker_symbol}."
+                
         except FrameworkError as err:
-            logging.error(f"Error: {err.explain()}")
+            error_msg = f"Framework error in market sentiment analysis: {err.explain()}"
+            logging.error(error_msg, exc_info=True)
+            agent_response = f"Analysis framework error for {self.ticker_symbol}. Please try again later."
+            
+        except AttributeError as err:
+            logging.error(f"Response structure error in market sentiment analysis: {err}", exc_info=True)
+            agent_response = f"Data structure error during market sentiment analysis of {self.ticker_symbol}."
+            
+        except Exception as err:
+            logging.error(f"Unexpected error in market sentiment analysis for {self.ticker_symbol}: {err}", exc_info=True)
+            agent_response = f"Unexpected error occurred during market sentiment analysis of {self.ticker_symbol}."
+            
         return agent_response
 
     async def analyze(self):

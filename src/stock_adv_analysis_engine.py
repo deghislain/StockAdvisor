@@ -125,19 +125,39 @@ class FinAnalystAgent:
         )
 
         prompt = get_stock_analysis_prompt(self.ticker_symbol)
-        logging.info(f"*-*-/-* User Prompt**-***-: {prompt}")
+        logging.info(f"Starting fundamental analysis for: {self.ticker_symbol}")
         agent_response = None
+        
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            fund_analys_report = response.last_message.text
-
-            if fund_analys_report:
-                agent_response = fund_analys_report
-
-            logging.info(
-                f"...................................................Fundamental analysis {agent_response}")
+            
+            # Safely extract the response
+            if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
+                fund_analys_report = response.last_message.text
+                
+                if fund_analys_report:
+                    agent_response = fund_analys_report
+                    logging.info(f"Fundamental analysis completed successfully for {self.ticker_symbol}")
+                else:
+                    logging.warning(f"Empty fundamental analysis report for {self.ticker_symbol}")
+                    agent_response = f"Unable to generate fundamental analysis for {self.ticker_symbol}. Please try again."
+            else:
+                logging.error("Unexpected response structure from fundamental analysis agent")
+                agent_response = f"Technical error occurred during fundamental analysis for {self.ticker_symbol}."
+                
         except FrameworkError as err:
-            logging.error(f"Error: {err.explain()}")
+            error_msg = f"Framework error in fundamental analysis: {err.explain()}"
+            logging.error(error_msg, exc_info=True)
+            agent_response = f"Analysis framework error for {self.ticker_symbol}. Please try again later."
+            
+        except AttributeError as err:
+            logging.error(f"Response structure error in fundamental analysis: {err}", exc_info=True)
+            agent_response = f"Data structure error during analysis of {self.ticker_symbol}."
+            
+        except Exception as err:
+            logging.error(f"Unexpected error in fundamental analysis for {self.ticker_symbol}: {err}", exc_info=True)
+            agent_response = f"Unexpected error occurred during fundamental analysis of {self.ticker_symbol}."
+            
         return agent_response
 
     async def analyze(self, ) -> str:

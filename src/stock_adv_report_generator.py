@@ -120,41 +120,106 @@ class ReportGeneratorAgent:
         )
         prompt = get_final_report_prompt(initial_report)
         agent_response = None
+        
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            final_report = response.last_message.text
-            if final_report:
-                agent_response = final_report
-
+            
+            # Safely extract the response
+            if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
+                final_report = response.last_message.text
+                
+                if final_report:
+                    agent_response = final_report
+                    logging.info("Final report generation completed successfully")
+                else:
+                    logging.warning("Empty final report generated")
+                    agent_response = "Unable to generate final report. Please try again."
+            else:
+                logging.error("Unexpected response structure from report writer agent")
+                agent_response = "Technical error occurred during report generation."
+                
         except FrameworkError as err:
-            print("Error:", err.explain())
-        logging.info(f"******************************_write_final_report ENDS with output: {agent_response}")
+            error_msg = f"Framework error in report generation: {err.explain()}"
+            logging.error(error_msg, exc_info=True)
+            agent_response = "Report generation framework error. Please try again later."
+            
+        except AttributeError as err:
+            logging.error(f"Response structure error in report generation: {err}", exc_info=True)
+            agent_response = "Data structure error during report generation."
+            
+        except Exception as err:
+            logging.error(f"Unexpected error in report generation: {err}", exc_info=True)
+            agent_response = "Unexpected error occurred during report generation."
+            
+        logging.info(f"_write_final_report completed with result: {bool(agent_response)}")
         return agent_response
 
     async def generate_report(self, ):
-        logging.info(f"******************************generate_report START with input: {self.stock_symbol}")
-        tasks = [
-            asyncio.create_task(self._perform_fundamental_analysis()),
-            asyncio.create_task(self._perform_market_sentiment_analysis()),
-            asyncio.create_task(self._perform_risk_assessment())
-        ]
+        """
+        Generate a comprehensive stock report by running all analyses concurrently.
+        
+        Returns:
+            str: The generated report or error message
+        """
+        logging.info(f"Starting report generation for: {self.stock_symbol}")
+        
+        try:
+            tasks = [
+                asyncio.create_task(self._perform_fundamental_analysis()),
+                asyncio.create_task(self._perform_market_sentiment_analysis()),
+                asyncio.create_task(self._perform_risk_assessment())
+            ]
 
-        # Wait for the two results (order depends on which thread finishes first)
-        results: dict[str, Any] = {}
-        for _ in range(3):
-            logging.info(f"-----------------*********------------LOOP")
-            kind, payload = await self.report_queue.get()  # blocks until a result is available
-            logging.info(f"-----------------*********------------Task Completed {kind} with output {payload}")
-            results[kind] = payload
-        await asyncio.gather(*tasks)
-        separator = "\n\n\n"
-        initial_report = separator.join([results["fund_analysis"], results["market_sent_analysis"],
-                                         results["risk_assessment"]])
-        if initial_report:
-            self.generated_report = await self._write_final_report(initial_report)
-            logging.info(f"******************************generate_report ENDS with output: {self.generated_report}")
-            self.report_queue.task_done()
-            return self.generated_report
+            # Wait for all results (order depends on which task finishes first)
+            results: dict[str, Any] = {}
+            for _ in range(3):
+                try:
+                    kind, payload = await asyncio.wait_for(
+                        self.report_queue.get(), 
+                        timeout=300  # 5 minutes timeout per analysis
+                    )
+                    logging.info(f"Task completed: {kind}")
+                    results[kind] = payload
+                except asyncio.TimeoutError:
+                    logging.error(f"Timeout waiting for analysis results")
+                    return f"Report generation timed out for {self.stock_symbol}. Please try again."
+                    
+            # Ensure all tasks complete
+            await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Validate we have all required results
+            required_keys = ["fund_analysis", "market_sent_analysis", "risk_assessment"]
+            missing_keys = [key for key in required_keys if key not in results]
+            
+            if missing_keys:
+                logging.error(f"Missing analysis results: {missing_keys}")
+                return f"Incomplete analysis for {self.stock_symbol}. Missing: {', '.join(missing_keys)}"
+            
+            # Combine all analyses
+            separator = "\n\n\n"
+            initial_report = separator.join([
+                results["fund_analysis"], 
+                results["market_sent_analysis"],
+                results["risk_assessment"]
+            ])
+            
+            if initial_report and initial_report.strip():
+                self.generated_report = await self._write_final_report(initial_report)
+                
+                if self.generated_report:
+                    logging.info(f"Report generation completed successfully for {self.stock_symbol}")
+                    self.report_queue.task_done()
+                    return self.generated_report
+                else:
+                    logging.error("Final report generation failed")
+                    return f"Failed to generate final report for {self.stock_symbol}."
+            else:
+                logging.error("Initial report is empty")
+                return f"Unable to compile analysis data for {self.stock_symbol}."
+                
+        except Exception as err:
+            logging.error(f"Unexpected error in generate_report for {self.stock_symbol}: {err}", exc_info=True)
+            return f"An unexpected error occurred while generating the report for {self.stock_symbol}. Please try again."
 
 
 async def main():

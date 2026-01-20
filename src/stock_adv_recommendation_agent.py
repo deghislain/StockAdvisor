@@ -74,8 +74,26 @@ async def call_recommendation_agent(user_query: str):
     recom_agent_resp = ""
     try:
         response = await main_agent.run(user_query, expected_output="Helpful and clear response.")
-        recom_agent_resp = response.state.answer.text
-        logging.info(f"*****************************call_recommendation_agent END with output: {recom_agent_resp}")
+        
+        # Safely extract the response text
+        if response and hasattr(response, 'state') and hasattr(response.state, 'answer'):
+            recom_agent_resp = response.state.answer.text
+            logging.info(f"call_recommendation_agent completed successfully")
+        else:
+            logging.warning("call_recommendation_agent returned unexpected response structure")
+            recom_agent_resp = "I apologize, but I couldn't generate a proper response. Please try rephrasing your question."
+            
     except FrameworkError as err:
-        logging.error(f"Error: {err.explain()}")
+        error_msg = f"Framework error occurred: {err.explain()}"
+        logging.error(error_msg, exc_info=True)
+        recom_agent_resp = "I encountered a technical issue while processing your request. Please try again."
+        
+    except AttributeError as err:
+        logging.error(f"Response structure error: {err}", exc_info=True)
+        recom_agent_resp = "I received an unexpected response format. Please try again."
+        
+    except Exception as err:
+        logging.error(f"Unexpected error in call_recommendation_agent: {err}", exc_info=True)
+        recom_agent_resp = "An unexpected error occurred. Please try again or contact support if the issue persists."
+        
     return recom_agent_resp
