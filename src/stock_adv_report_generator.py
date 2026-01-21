@@ -13,7 +13,7 @@ from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools import Tool
 from beeai_framework.errors import FrameworkError
 
-import asyncio, logging
+import asyncio, logging, time
 from typing import Any
 
 from stock_adv_analysis_engine import FinAnalystAgent
@@ -39,34 +39,61 @@ class ReportGeneratorAgent:
         self.report_queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
 
     async def _perform_fundamental_analysis(self, ):
-        logging.info(
-            f"******************************_perform_fundamental_analysis START with input: {self.stock_symbol}")
-        if self.stock_symbol:
-            self.fund_analysis = await self.fin_analyst_agent.analyze()
-            if self.fund_analysis:
-                await self.report_queue.put(("fund_analysis", self.fund_analysis))
-        logging.info(
-            f"******************************_perform_fundamental_analysis END with output: {self.fund_analysis}")
-        # return self.fund_analysis
+        logging.info(f"[FUNDAMENTAL] Starting analysis for {self.stock_symbol}")
+        start_time = time.time()
+        
+        try:
+            if self.stock_symbol:
+                self.fund_analysis = await self.fin_analyst_agent.analyze()
+                if self.fund_analysis:
+                    await self.report_queue.put(("fund_analysis", self.fund_analysis))
+                    duration = time.time() - start_time
+                    logging.info(f"[FUNDAMENTAL] Completed successfully in {duration:.2f}s for {self.stock_symbol}")
+                else:
+                    logging.warning(f"[FUNDAMENTAL] Empty result for {self.stock_symbol}")
+                    await self.report_queue.put(("fund_analysis", f"Unable to complete fundamental analysis for {self.stock_symbol}"))
+        except Exception as e:
+            duration = time.time() - start_time
+            logging.error(f"[FUNDAMENTAL] Failed after {duration:.2f}s for {self.stock_symbol}: {e}", exc_info=True)
+            await self.report_queue.put(("fund_analysis", f"Fundamental analysis error: {str(e)}"))
 
     async def _perform_market_sentiment_analysis(self, ):
-        logging.info(
-            f"******************************_perform_market_sentiment_analysis START with input: {self.stock_symbol}")
-        if self.stock_symbol:
-            self.market_sentiment_analysis = await self.market_sentiment_analyzer.analyze()
-            if self.market_sentiment_analysis:
-                await self.report_queue.put(("market_sent_analysis", self.market_sentiment_analysis))
-        logging.info(
-            f"******************************_perform_market_sentiment_analysis END with output: {self.fund_analysis}")
+        logging.info(f"[SENTIMENT] Starting analysis for {self.stock_symbol}")
+        start_time = time.time()
+        
+        try:
+            if self.stock_symbol:
+                self.market_sentiment_analysis = await self.market_sentiment_analyzer.analyze()
+                if self.market_sentiment_analysis:
+                    await self.report_queue.put(("market_sent_analysis", self.market_sentiment_analysis))
+                    duration = time.time() - start_time
+                    logging.info(f"[SENTIMENT] Completed successfully in {duration:.2f}s for {self.stock_symbol}")
+                else:
+                    logging.warning(f"[SENTIMENT] Empty result for {self.stock_symbol}")
+                    await self.report_queue.put(("market_sent_analysis", f"Unable to complete sentiment analysis for {self.stock_symbol}"))
+        except Exception as e:
+            duration = time.time() - start_time
+            logging.error(f"[SENTIMENT] Failed after {duration:.2f}s for {self.stock_symbol}: {e}", exc_info=True)
+            await self.report_queue.put(("market_sent_analysis", f"Sentiment analysis error: {str(e)}"))
 
     async def _perform_risk_assessment(self, ):
-        logging.info(f"******************************_perform_risk_assessment START with input: {self.stock_symbol}")
-        if self.stock_symbol:
-            self.risk_assessment = await self.risk_assessment_agent.analyze()
-            if self.risk_assessment:
-                await self.report_queue.put(("risk_assessment", self.risk_assessment))
-        logging.info(
-            f"******************************_perform_risk_assessment END with output: {self.risk_assessment}")
+        logging.info(f"[RISK] Starting analysis for {self.stock_symbol}")
+        start_time = time.time()
+        
+        try:
+            if self.stock_symbol:
+                self.risk_assessment = await self.risk_assessment_agent.analyze()
+                if self.risk_assessment:
+                    await self.report_queue.put(("risk_assessment", self.risk_assessment))
+                    duration = time.time() - start_time
+                    logging.info(f"[RISK] Completed successfully in {duration:.2f}s for {self.stock_symbol}")
+                else:
+                    logging.warning(f"[RISK] Empty result for {self.stock_symbol}")
+                    await self.report_queue.put(("risk_assessment", f"Unable to complete risk assessment for {self.stock_symbol}"))
+        except Exception as e:
+            duration = time.time() - start_time
+            logging.error(f"[RISK] Failed after {duration:.2f}s for {self.stock_symbol}: {e}", exc_info=True)
+            await self.report_queue.put(("risk_assessment", f"Risk assessment error: {str(e)}"))
 
     async def _write_final_report(self, initial_report: str) -> str:
         logging.info(f"******************************_write_final_report STARTS with input: {initial_report} *******///")
@@ -172,17 +199,19 @@ class ReportGeneratorAgent:
 
             # Wait for all results (order depends on which task finishes first)
             results: dict[str, Any] = {}
-            for _ in range(3):
+            for i in range(3):
                 try:
+                    logging.info(f"Waiting for analysis result {i+1}/3...")
                     kind, payload = await asyncio.wait_for(
                         self.report_queue.get(), 
-                        timeout=300  # 5 minutes timeout per analysis
+                        timeout=12000  # 10 minutes timeout per analysis (increased from 5)
                     )
-                    logging.info(f"Task completed: {kind}")
+                    logging.info(f"[QUEUE] Received result {i+1}/3: {kind}")
                     results[kind] = payload
                 except asyncio.TimeoutError:
-                    logging.error(f"Timeout waiting for analysis results")
-                    return f"Report generation timed out for {self.stock_symbol}. Please try again."
+                    logging.error(f"[QUEUE] Timeout waiting for analysis result {i+1}/3 after 12000 seconds")
+                    logging.error(f"[QUEUE] Results received so far: {list(results.keys())}")
+                    return f"Report generation timed out for {self.stock_symbol}. One or more analyses took longer than 10 minutes. Please try again."
                     
             # Ensure all tasks complete
             await asyncio.gather(*tasks, return_exceptions=True)
