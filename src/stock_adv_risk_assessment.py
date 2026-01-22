@@ -17,7 +17,8 @@ from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.tools.think import ThinkTool
 
-from stock_adv_utils import FIN_MODEL
+#from stock_adv_utils import FIN_MODEL
+from config import ModelConfig as mc
 from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
 from stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
                                          RISK_ASSESSMENT_REVIEW_INSTRUCTIONS,
@@ -41,7 +42,7 @@ class StockRiskAnalyzer:
 
     async def _perform_risk_analysis(self, ) -> str:
         risk_assessment_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[ThinkTool(), StockRiskAnalysisTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1),
                           ConditionalRequirement(StockRiskAnalysisTool, min_invocations=1, max_invocations=1,
@@ -52,14 +53,14 @@ class StockRiskAnalyzer:
             instructions=RISK_ASSESSMENT_INSTRUCTIONS
         )
         quality_check_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[ThinkTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="quality checker",
             instructions=RISK_ASSESSMENT_REVIEW_INSTRUCTIONS
         )
         risk_assessment_enhancer_agent = RequirementAgent(
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[ThinkTool()],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="risk assessment enhancer",
@@ -68,7 +69,7 @@ class StockRiskAnalyzer:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=12000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=12000, temperature=0),
             tools=[
                 ThinkTool(),
                 HandoffTool(

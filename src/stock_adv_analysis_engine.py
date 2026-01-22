@@ -11,7 +11,8 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
-from stock_adv_utils import SMALL_MODEL, FIN_MODEL
+#from stock_adv_utils import SMALL_MODEL, FIN_MODEL
+from config import ModelConfig as mc
 from beeai_framework.tools.think import ThinkTool
 from stock_adv_data_fetcher_tool import DataFetcherTool
 from stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
@@ -36,7 +37,7 @@ class FinAnalystAgent:
     async def _perform_fundamental_analysis(self, ) -> str:
         data_fetcher_agent = RequirementAgent(
             name="DataFetchAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=6000),
+            llm=ChatModel.from_name(mc.small_model, timeout=6000),
             tools=[
                 ThinkTool(),  # to reason
                 DataFetcherTool()
@@ -51,7 +52,7 @@ class FinAnalystAgent:
 
         financial_analyst_agent = RequirementAgent(
             name="FinancialAnalystAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -64,7 +65,7 @@ class FinAnalystAgent:
 
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -77,7 +78,7 @@ class FinAnalystAgent:
 
         fundamental_analysis_enhancer_agent = RequirementAgent(
             name="FundamentalAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -90,7 +91,7 @@ class FinAnalystAgent:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000, temperature=0),
+            llm=ChatModel.from_name(mc.small_model, timeout=12000, temperature=0),
             tools=[
                 ThinkTool(),
                 HandoffTool(

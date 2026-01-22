@@ -12,7 +12,8 @@ from beeai_framework.backend import ChatModel
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
-from stock_adv_utils import SMALL_MODEL, FIN_MODEL
+#from stock_adv_utils import SMALL_MODEL, FIN_MODEL
+from config import ModelConfig as mc
 
 from stock_adv_market_sent_analysis_instructions import (WEB_SEARCH_INSTRUCTIONS,
                                                          MARKET_SENT_ANALYSIS_INSTRUCTIONS,
@@ -38,7 +39,7 @@ class StockMarketSentimentAnalyzer:
     async def _perform_market_sentiment_analysis(self) -> str:
         web_search_agent = RequirementAgent(
             name="WebSearchAgent",
-            llm=ChatModel.from_name(SMALL_MODEL),
+            llm=ChatModel.from_name(mc.small_model),
             tools=[
                 ThinkTool(),  # to reason
                 WebSearchTool()
@@ -50,7 +51,7 @@ class StockMarketSentimentAnalyzer:
             ])
         financial_analyst_agent = RequirementAgent(
             name="FinancialAnalystAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -61,7 +62,7 @@ class StockMarketSentimentAnalyzer:
         )
         quality_check_agent = RequirementAgent(
             name="QualityCheckAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -72,7 +73,7 @@ class StockMarketSentimentAnalyzer:
         )
         market_sentiment_analysis_enhancer_agent = RequirementAgent(
             name="MarketSentimentAnalysisEnhancerAgent",
-            llm=ChatModel.from_name(FIN_MODEL, timeout=6000, temperature=0),
+            llm=ChatModel.from_name(mc.fin_model, timeout=6000, temperature=0),
             tools=[
                 ThinkTool(),  # to reason
             ],
@@ -83,7 +84,7 @@ class StockMarketSentimentAnalyzer:
         )
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(SMALL_MODEL, timeout=12000, temperature=0),
+            llm=ChatModel.from_name(mc.small_model, timeout=12000, temperature=0),
             tools=[
                 ThinkTool(),
                 HandoffTool(

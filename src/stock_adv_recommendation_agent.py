@@ -13,7 +13,8 @@ from beeai_framework.backend import ChatModel
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
-from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
+#from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
+from config import ModelConfig as mc
 
 from stock_adv_market_sent_analysis_instructions import WEB_SEARCH_INSTRUCTIONS
 import logging
@@ -34,7 +35,7 @@ async def call_recommendation_agent(user_query: str):
 
     web_search_agent = RequirementAgent(
         name="WebSearchAgent",
-        llm=ChatModel.from_name(SMALL_MODEL),
+        llm=ChatModel.from_name(mc.small_model),
         tools=[
             ThinkTool(),  # to reason
             WebSearchTool()
@@ -47,7 +48,7 @@ async def call_recommendation_agent(user_query: str):
 
     main_agent = RequirementAgent(
         name="RecommendationAgent",
-        llm=ChatModel.from_name(LARGE_MODEL),
+        llm=ChatModel.from_name(mc.small_model),
         tools=[
             ThinkTool(),
             HandoffTool(
