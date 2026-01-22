@@ -65,21 +65,24 @@ def update_chat_history(input: Any, result: Any) -> None:
     chat_history.extend([input, result])
 
 
-async def generate_report(user_stock: str):
-    """Generate and display the report."""
+async def generate_report_async(user_stock: str):
+    """Generate the report asynchronously."""
+    # Check if report already exists in session state for this stock
+    if 'generated_report' in st.session_state and st.session_state.get('report_stock') == user_stock:
+        logging.info(f"Using cached report for {user_stock}")
+        return st.session_state['generated_report']
+    
+    logging.info(f"Generating new report for {user_stock}")
     report_generator = ReportGeneratorAgent(user_stock)
-    generated_report = None
-    if 'generated_report' not in st.session_state:
-        generated_report = await report_generator.generate_report()
-
+    generated_report = await report_generator.generate_report()
+    
+    # Store in session state
+    if generated_report:
+        st.session_state['generated_report'] = generated_report
+        st.session_state['report_stock'] = user_stock
+        logging.info(f"Report cached in session state for {user_stock}")
+    
     return generated_report
-
-
-def get_user_questions():
-    user_input_messages = st.chat_input("Any question?")
-    if user_input_messages:
-        return user_input_messages
-    return None
 
 
 def get_user_input() -> str:
@@ -114,47 +117,72 @@ def get_user_input() -> str:
     return user_stock
 
 
-async def perform_fundamental_analysis(user_stock: str):
+def perform_fundamental_analysis(user_stock: str):
+    """Perform fundamental analysis and display results."""
     if st.button("Generate Report"):
         if user_stock:
-            logging.info(
-                f"---------------------------------------------Generating report for: {user_stock}**********************")
-            generated_report = None
-            current_input = None
-            if 'stock' in st.session_state:
-                current_input = st.session_state.stock
-            # A new report is generated when user has changed stock symbol or when there is not an existing one
-            if (current_input and current_input is not user_stock) or ('generated_report' not in st.session_state):
-                generated_report = await generate_report(user_stock)
-            else:
-                generated_report = st.session_state.generated_report
+            try:
+                logging.info(f"Generating report for: {user_stock}")
+                
+                # Check if we need to regenerate
+                current_stock = st.session_state.get('report_stock')
+                if current_stock != user_stock or 'generated_report' not in st.session_state:
+                    # Run async function synchronously
+                    with st.spinner("Generating comprehensive report... This may take a few minutes."):
+                        generated_report = asyncio.run(generate_report_async(user_stock))
+                else:
+                    generated_report = st.session_state['generated_report']
+                    logging.info(f"Using cached report for {user_stock}")
 
-            if generated_report:
-                st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
-                st.success("Done")
-
-            user_question = get_user_questions()
-            if user_question:
-                agent_response = await get_recommendation_agent_response(user_question)
-                if agent_response:
-                    update_chat_history(user_question, agent_response)
-            display_chat_history()
+                if generated_report:
+                    st.text_area(":blue[Here is the generated report:]", value=generated_report, height=500)
+                    st.success("Report generated successfully!")
+                else:
+                    st.error("Failed to generate report. Please try again.")
+                    
+            except Exception as e:
+                st.error(f"Error generating report: {str(e)}")
+                logging.error(f"Report generation failed: {e}", exc_info=True)
         else:
-            st.write("Enter a stock symbol please")
+            st.error("Please enter a stock symbol")
+    
+    # Chat interface - outside button logic to prevent state loss
+    if 'generated_report' in st.session_state and st.session_state.get('report_stock') == user_stock:
+        st.divider()
+        st.subheader("Ask Questions About the Report")
+        
+        user_question = st.chat_input("Any questions about the analysis?")
+        
+        if user_question:
+            try:
+                with st.spinner("Getting answer..."):
+                    agent_response = asyncio.run(get_recommendation_agent_response(user_question))
+                    if agent_response:
+                        update_chat_history(user_question, agent_response)
+                    else:
+                        st.error("Failed to get response. Please try again.")
+            except Exception as e:
+                st.error(f"Error processing question: {str(e)}")
+                logging.error(f"Question processing failed: {e}", exc_info=True)
+        
+        display_chat_history()
 
 
-async def create_interface():
+def create_interface():
     """Create the user interface and handle interactions."""
-    logging.info("**************------------------****************create_interface START")
+    logging.info("create_interface START")
     user_stock = get_user_input()
 
     tab1, tab2 = st.tabs(["Fundamental analysis", "Technical analysis"])
     with tab1:
         st.header("Fundamental Analysis")
-        # if 'generated_report' not in st.session_state:
-        await perform_fundamental_analysis(user_stock)
+        perform_fundamental_analysis(user_stock)
     with tab2:
         st.header("Technical analysis")
-        await perform_tech_analysis(user_stock)
+        try:
+            asyncio.run(perform_tech_analysis(user_stock))
+        except Exception as e:
+            st.error(f"Error in technical analysis: {str(e)}")
+            logging.error(f"Technical analysis failed: {e}", exc_info=True)
 
-    logging.info("**************------------------****************create_interface END")
+    logging.info("create_interface END")

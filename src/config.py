@@ -10,6 +10,8 @@ class ModelConfig:
     fin_model: str = os.getenv("FIN_MODEL", "ollama:0xroyce/Plutus-3B:latest")
     default_timeout: int = int(os.getenv("AGENT_TIMEOUT", "12000"))
     max_retries: int = int(os.getenv("MAX_RETRIES", "3"))
+    llm_timeout: int = int(os.getenv("AGENT_TIMEOUT", "3600"))
+    main_llm_timeout: int = int(os.getenv("AGENT_TIMEOUT", "3600"))
 
 
 @dataclass

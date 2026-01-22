@@ -19,7 +19,6 @@ from typing import Any
 from stock_adv_analysis_engine import FinAnalystAgent
 from stock_adv_market_sentiment import StockMarketSentimentAnalyzer
 from stock_adv_risk_assessment import StockRiskAnalyzer
-#from stock_adv_utils import FIN_MODEL, SMALL_MODEL
 from config import ModelConfig as mc
 from stock_adv_report_instructions import REPORT_WRITER_INSTRUCTIONS, REPORT_REVIEWER_INSTRUCTIONS, REPORT_REFINER_INSTRUCTIONS
 from stock_adv_prompts import get_final_report_prompt
@@ -99,21 +98,21 @@ class ReportGeneratorAgent:
     async def _write_final_report(self, initial_report: str) -> str:
         logging.info(f"******************************_write_final_report STARTS with input: {initial_report} *******///")
         report_writer = RequirementAgent(
-            llm=ChatModel.from_name(mc.small_model, timeout=12000, stream=False),
+            llm=ChatModel.from_name(mc.small_model, timeout=mc.llm_timeout, stream=False),
             tools=[ThinkTool(), ],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="Report Writer",
             instructions=REPORT_WRITER_INSTRUCTIONS,
         )
         report_reviewer = RequirementAgent(
-            llm=ChatModel.from_name(mc.fin_model, timeout=12000, stream=False),
+            llm=ChatModel.from_name(mc.fin_model, timeout=mc.llm_timeout, stream=False),
             tools=[ThinkTool(), ],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="Report Reviewer",
             instructions=REPORT_REVIEWER_INSTRUCTIONS,
         )
         report_refiner = RequirementAgent(
-            llm=ChatModel.from_name(mc.small_model, timeout=12000, stream=False),
+            llm=ChatModel.from_name(mc.small_model, timeout=mc.llm_timeout, stream=False),
             tools=[ThinkTool(), ],
             requirements=[ConditionalRequirement(ThinkTool, force_at_step=1)],
             role="Report Refiner",
@@ -122,7 +121,7 @@ class ReportGeneratorAgent:
 
         main_agent = RequirementAgent(
             name="MainAgent",
-            llm=ChatModel.from_name(mc.small_model, timeout=18000, stream=False),
+            llm=ChatModel.from_name(mc.small_model, timeout=mc.main_llm_timeout, stream=False),
             tools=[
                 ThinkTool(),
                 HandoffTool(
@@ -205,12 +204,12 @@ class ReportGeneratorAgent:
                     logging.info(f"Waiting for analysis result {i+1}/3...")
                     kind, payload = await asyncio.wait_for(
                         self.report_queue.get(), 
-                        timeout=12000  # 10 minutes timeout per analysis (increased from 5)
+                        timeout=mc.default_timeout  # 10 minutes timeout per analysis
                     )
                     logging.info(f"[QUEUE] Received result {i+1}/3: {kind}")
                     results[kind] = payload
                 except asyncio.TimeoutError:
-                    logging.error(f"[QUEUE] Timeout waiting for analysis result {i+1}/3 after 12000 seconds")
+                    logging.error(f"[QUEUE] Timeout waiting for analysis result {i+1}/3 after 600 seconds")
                     logging.error(f"[QUEUE] Results received so far: {list(results.keys())}")
                     return f"Report generation timed out for {self.stock_symbol}. One or more analyses took longer than 10 minutes. Please try again."
                     
