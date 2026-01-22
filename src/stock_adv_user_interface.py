@@ -9,6 +9,12 @@ from typing import Dict, Any
 from stock_adv_agent import get_recommendation_agent_response
 from stock_adv_report_generator import ReportGeneratorAgent
 from stock_adv_technical_analysis import perform_tech_analysis
+from stock_adv_security import (
+    validate_stock_symbol,
+    sanitize_input,
+    report_rate_limiter,
+    chat_rate_limiter
+)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -88,6 +94,7 @@ async def generate_report_async(user_stock: str):
 def get_user_input() -> str:
     """
     Prompt the user for a stock ticker symbol and store it in ``st.session_state``.
+    Includes validation to ensure only valid stock symbols are accepted.
 
     Returns
     -------
@@ -95,6 +102,7 @@ def get_user_input() -> str:
         The ticker symbol entered by the user (empty string if none).
     """
     STOCK_KEY = "stock"
+    VALIDATION_KEY = "stock_validation_error"
 
     # Retrieve the current value from session state, if any
     current_stock: str = st.session_state.get(STOCK_KEY, "")
@@ -106,9 +114,22 @@ def get_user_input() -> str:
         placeholder="e.g. IBM",
     ).strip().upper()
 
-    # Update session state only when the user provides a non‑empty value
+    # Validate and update session state only when the user provides a non‑empty value
     if user_stock:
-        st.session_state[STOCK_KEY] = user_stock
+        # Validate stock symbol
+        is_valid, error_message = validate_stock_symbol(user_stock)
+        
+        if is_valid:
+            st.session_state[STOCK_KEY] = user_stock
+            # Clear any previous validation errors
+            if VALIDATION_KEY in st.session_state:
+                del st.session_state[VALIDATION_KEY]
+        else:
+            # Show validation error
+            st.error(f"Invalid stock symbol: {error_message}")
+            st.session_state[VALIDATION_KEY] = error_message
+            logging.warning(f"Invalid stock symbol entered: {user_stock} - {error_message}")
+            return ""
     elif STOCK_KEY in st.session_state:
         # Preserve the previous value if the input is cleared
         user_stock = st.session_state[STOCK_KEY]
@@ -121,6 +142,21 @@ def perform_fundamental_analysis(user_stock: str):
     """Perform fundamental analysis and display results."""
     if st.button("Generate Report"):
         if user_stock:
+            # Get or create session ID for rate limiting
+            if 'session_id' not in st.session_state:
+                import uuid
+                st.session_state['session_id'] = str(uuid.uuid4())
+            
+            session_id = st.session_state['session_id']
+            
+            # Check rate limit
+            if not report_rate_limiter.is_allowed(session_id):
+                remaining = report_rate_limiter.get_remaining_requests(session_id)
+                st.error("⚠️ Rate limit exceeded. Please wait a few minutes before generating another report.")
+                st.info(f"You can generate {remaining} more reports in the next 5 minutes.")
+                logging.warning(f"Rate limit exceeded for session: {session_id}")
+                return
+            
             try:
                 logging.info(f"Generating report for: {user_stock}")
                 
@@ -128,7 +164,7 @@ def perform_fundamental_analysis(user_stock: str):
                 current_stock = st.session_state.get('report_stock')
                 if current_stock != user_stock or 'generated_report' not in st.session_state:
                     # Run async function synchronously
-                    with st.spinner("Generating comprehensive report... This may take a few minutes."):
+                    with st.spinner(":green[Generating comprehensive report... This may take a few minutes.]"):
                         generated_report = asyncio.run(generate_report_async(user_stock))
                 else:
                     generated_report = st.session_state['generated_report']
@@ -154,9 +190,25 @@ def perform_fundamental_analysis(user_stock: str):
         user_question = st.chat_input("Any questions about the analysis?")
         
         if user_question:
+            # Get session ID for rate limiting
+            session_id = st.session_state.get('session_id', 'default')
+            
+            # Check rate limit for chat
+            if not chat_rate_limiter.is_allowed(session_id):
+                st.error("⚠️ Too many questions. Please wait a moment before asking again.")
+                logging.warning(f"Chat rate limit exceeded for session: {session_id}")
+                return
+            
+            # Sanitize user input
+            sanitized_question = sanitize_input(user_question)
+            
+            if not sanitized_question:
+                st.error("Invalid question. Please try again with a different question.")
+                return
+            
             try:
                 with st.spinner("Getting answer..."):
-                    agent_response = asyncio.run(get_recommendation_agent_response(user_question))
+                    agent_response = asyncio.run(get_recommendation_agent_response(sanitized_question))
                     if agent_response:
                         update_chat_history(user_question, agent_response)
                     else:
