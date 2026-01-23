@@ -8,5 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
-*test*.py
 .bob
+.docs
+.env*
+

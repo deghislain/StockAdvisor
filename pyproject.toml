@@ -21,4 +21,7 @@ dependencies = [
    "bs4",
    "beeai-framework[wikipedia]",
    "yfinance",
+   "pytest",
+   "duckduckgo-search >=2.0",
+   "streamlit.testing.script_interactions"
 ]
