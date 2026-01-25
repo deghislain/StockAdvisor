@@ -137,6 +137,14 @@ def get_user_input() -> str:
     logging.info("get_user_input END with output %s", user_stock)
     return user_stock
 
+def should_regenerate_report(user_stock: str) -> bool:
+    """Determine if report needs regeneration."""
+    if 'generated_report' not in st.session_state:
+        return True
+    if 'last_stock' not in st.session_state:
+        return True
+    return st.session_state.get('last_stock', '').upper() != user_stock.upper()
+
 
 def perform_fundamental_analysis(user_stock: str):
     """Perform fundamental analysis and display results."""
@@ -159,13 +167,12 @@ def perform_fundamental_analysis(user_stock: str):
             
             try:
                 logging.info(f"Generating report for: {user_stock}")
-                
                 # Check if we need to regenerate
-                current_stock = st.session_state.get('report_stock')
-                if current_stock != user_stock or 'generated_report' not in st.session_state:
-                    # Run async function synchronously
-                    with st.spinner(":green[Generating comprehensive report... This may take a few minutes.]"):
+                if should_regenerate_report(user_stock):
+                    with st.spinner(f":green[Generating report for {user_stock}...This may take a few minutes]"):
                         generated_report = asyncio.run(generate_report_async(user_stock))
+                        st.session_state['generated_report'] = generated_report
+                        st.session_state['last_stock'] = user_stock
                 else:
                     generated_report = st.session_state['generated_report']
                     logging.info(f"Using cached report for {user_stock}")
