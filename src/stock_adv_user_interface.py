@@ -77,17 +77,17 @@ async def generate_report_async(user_stock: str):
     if 'generated_report' in st.session_state and st.session_state.get('report_stock') == user_stock:
         logging.info(f"Using cached report for {user_stock}")
         return st.session_state['generated_report']
-    
+
     logging.info(f"Generating new report for {user_stock}")
     report_generator = ReportGeneratorAgent(user_stock)
     generated_report = await report_generator.generate_report()
-    
+
     # Store in session state
     if generated_report:
         st.session_state['generated_report'] = generated_report
         st.session_state['report_stock'] = user_stock
         logging.info(f"Report cached in session state for {user_stock}")
-    
+
     return generated_report
 
 
@@ -118,7 +118,7 @@ def get_user_input() -> str:
     if user_stock:
         # Validate stock symbol
         is_valid, error_message = validate_stock_symbol(user_stock)
-        
+
         if is_valid:
             st.session_state[STOCK_KEY] = user_stock
             # Clear any previous validation errors
@@ -137,6 +137,7 @@ def get_user_input() -> str:
     logging.info("get_user_input END with output %s", user_stock)
     return user_stock
 
+
 def should_regenerate_report(user_stock: str) -> bool:
     """Determine if report needs regeneration."""
     if 'generated_report' not in st.session_state:
@@ -154,9 +155,9 @@ def perform_fundamental_analysis(user_stock: str):
             if 'session_id' not in st.session_state:
                 import uuid
                 st.session_state['session_id'] = str(uuid.uuid4())
-            
+
             session_id = st.session_state['session_id']
-            
+
             # Check rate limit
             if not report_rate_limiter.is_allowed(session_id):
                 remaining = report_rate_limiter.get_remaining_requests(session_id)
@@ -164,7 +165,7 @@ def perform_fundamental_analysis(user_stock: str):
                 st.info(f"You can generate {remaining} more reports in the next 5 minutes.")
                 logging.warning(f"Rate limit exceeded for session: {session_id}")
                 return
-            
+
             try:
                 logging.info(f"Generating report for: {user_stock}")
                 # Check if we need to regenerate
@@ -182,37 +183,37 @@ def perform_fundamental_analysis(user_stock: str):
                     st.success("Report generated successfully!")
                 else:
                     st.error("Failed to generate report. Please try again.")
-                    
+
             except Exception as e:
                 st.error(f"Error generating report: {str(e)}")
                 logging.error(f"Report generation failed: {e}", exc_info=True)
         else:
             st.error("Please enter a stock symbol")
-    
+
     # Chat interface - outside button logic to prevent state loss
     if 'generated_report' in st.session_state and st.session_state.get('report_stock') == user_stock:
         st.divider()
         st.subheader("Ask Questions About the Report")
-        
+
         user_question = st.chat_input("Any questions about the analysis?")
-        
+
         if user_question:
             # Get session ID for rate limiting
             session_id = st.session_state.get('session_id', 'default')
-            
+
             # Check rate limit for chat
             if not chat_rate_limiter.is_allowed(session_id):
                 st.error("⚠️ Too many questions. Please wait a moment before asking again.")
                 logging.warning(f"Chat rate limit exceeded for session: {session_id}")
                 return
-            
+
             # Sanitize user input
             sanitized_question = sanitize_input(user_question)
-            
+
             if not sanitized_question:
                 st.error("Invalid question. Please try again with a different question.")
                 return
-            
+
             try:
                 with st.spinner("Getting answer..."):
                     agent_response = asyncio.run(get_recommendation_agent_response(sanitized_question))
@@ -223,7 +224,7 @@ def perform_fundamental_analysis(user_stock: str):
             except Exception as e:
                 st.error(f"Error processing question: {str(e)}")
                 logging.error(f"Question processing failed: {e}", exc_info=True)
-        
+
         display_chat_history()
 
 
