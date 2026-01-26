@@ -156,3 +156,34 @@ def patched_risk_agent_requirements():
         yield started
     finally:
         _stop_patches(patches)
+
+
+@pytest.fixture
+def patched_sent_agent_requirements():
+    """
+    Patch heavy dependencies of ``StockMarketSentimentAnalyzer``.
+    Returns a mapping ``{name: mock}`` for inspection in tests.
+    """
+    patches = {
+        "ChatModel": mock.patch("src.stock_adv_market_sentiment.ChatModel"),
+        "RequirementAgent": mock.patch(
+            "src.stock_adv_market_sentiment.RequirementAgent"
+        ),
+        "ThinkTool": mock.patch("src.stock_adv_market_sentiment.ThinkTool"),
+        "StockRiskAnalysisTool": mock.patch(
+            "src.stock_adv_market_sentiment.WebSearchTool"
+        ),
+        "HandoffTool": mock.patch("src.stock_adv_market_sentiment.HandoffTool"),
+        "ConditionalRequirement": mock.patch(
+            "src.stock_adv_market_sentiment.ConditionalRequirement"
+        ),
+        "GlobalTrajectoryMiddleware": mock.patch(
+            "src.stock_adv_market_sentiment.GlobalTrajectoryMiddleware"
+        ),
+    }
+
+    started = _start_patches(patches)
+    try:
+        yield started
+    finally:
+        _stop_patches(patches)

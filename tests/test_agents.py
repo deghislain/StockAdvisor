@@ -197,7 +197,7 @@ class TestStockRiskAnalyzer:
             invalid_stock_symbol,
             patched_risk_agent_requirements,
     ):
-        """Test error handling in risk analyzer."""
+        """Test invalid stock symbol."""
         # --------------------------------------------------- Arrange
         analyzer = StockRiskAnalyzer(invalid_stock_symbol)
 
@@ -238,6 +238,83 @@ class TestStockRiskAnalyzer:
         main_agent.run = AsyncMock(return_value=DummyResponse(""))
 
         result = await agent.analyze()
+
+        assert isinstance(result, str)
+        assert "unable" in result.lower() or "error" in result.lower()
+
+
+@pytest.mark.skipif(not BEEAI_AVAILABLE, reason="Requires beeai_framework")
+class TestStockMarketSentimentAnalyzer:
+    """Test suite for Market Sentiment Analyzer."""
+
+    @pytest.mark.asyncio
+    async def test_sentiment_analyzer_success(self, sample_stock_symbol,
+                                              patched_sent_agent_requirements,
+                                              handoff_ctor_fixture):
+        """Test sentiment analyzer with valid symbol."""
+        analyzer = StockMarketSentimentAnalyzer(sample_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_sent_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        # mock chain of RequirementAgent objects
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_sent_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # inject shared handoff constructor
+        ctor, handoff_instances = handoff_ctor_fixture
+        patched_sent_agent_requirements["HandoffTool"].side_effect = ctor
+
+        # main agent returns a dummy response
+        dummy_resp = DummyResponse(f"Analysis for {sample_stock_symbol}")
+        main_agent.run = AsyncMock(return_value=dummy_resp)
+
+        result = await analyzer.analyze()
+
+        assert result is not None
+        assert sample_stock_symbol in result
+        assert isinstance(result, str)
+
+    @pytest.mark.asyncio
+    async def test_sentiment_analyzer_invalid_stock_symbol(self, invalid_stock_symbol, patched_sent_agent_requirements):
+        """Test invalid stock symbol."""
+        analyzer = StockMarketSentimentAnalyzer(invalid_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_sent_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_sent_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        main_agent.run = AsyncMock(side_effect=Exception("Test error"))
+
+        result = await analyzer.analyze()
+
+        assert result is not None
+        assert "error" in result.lower() or "unexpected" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_sent_analyze_empty_response(
+            self,
+            sample_stock_symbol,
+            patched_sent_agent_requirements: dict,
+    ):
+        """Test handling of an empty response."""
+        analyzer = StockMarketSentimentAnalyzer(sample_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_sent_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_sent_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # Return a DummyResponse with an empty string (matches the real contract)
+        main_agent.run = AsyncMock(return_value=DummyResponse(""))
+
+        result = await analyzer.analyze()
 
         assert isinstance(result, str)
         assert "unable" in result.lower() or "error" in result.lower()
