@@ -129,7 +129,7 @@ class TestFinAnalystAgent:
         assert len(handoff_instances) == 4  # one per non‑main agent
 
     @pytest.mark.asyncio
-    async def test_analyze_error_handling(
+    async def test_analyze_invalid_stock_symbol(
         self,
         invalid_stock_symbol: str,
         patched_requirements: dict,
@@ -158,3 +158,23 @@ class TestFinAnalystAgent:
         assert isinstance(result, str)
         lowered = result.lower()
         assert "error" in lowered or "unexpected" in lowered
+
+    @pytest.mark.asyncio
+    async def test_analyze_empty_response(self, sample_stock_symbol, patched_requirements: dict,):
+        """Test handling of empty response."""
+        agent = FinAnalystAgent(sample_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        # Build the same mock chain as in the success test
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_requirements["RequirementAgent"].side_effect = mock_chain
+
+        main_agent.run = AsyncMock(return_value="")
+
+        result = await agent.analyze()
+
+        assert result is not None
+        assert "unable" in result.lower() or "error" in result.lower()
