@@ -20,6 +20,7 @@ try:
     from src.stock_adv_risk_assessment import StockRiskAnalyzer
     from src.stock_adv_market_sentiment import StockMarketSentimentAnalyzer
     from src.stock_adv_report_generator import ReportGeneratorAgent
+    from src.config import ModelConfig as mc
 
     BEEAI_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
@@ -346,3 +347,23 @@ class TestReportGeneratorAgent:
             assert sample_stock_symbol in result
             assert result.startswith("Final")
 
+    @pytest.mark.asyncio
+    async def test_generate_report_time_out(self, sample_stock_symbol):
+
+        reporter = ReportGeneratorAgent(sample_stock_symbol)
+        short_timeout = 0.1
+        with patch.object(reporter, "_perform_fundamental_analysis",
+                          new=self._queue_mock(reporter, "fund_analysis", "Fund text")), \
+                patch.object(reporter, "_perform_market_sentiment_analysis",
+                             new=self._queue_mock(reporter, "market_sent_analysis", "Sentiment text")), \
+                patch.object(reporter, "_perform_risk_assessment",
+                             new=self._queue_mock(reporter, "risk_assessment", "Risk text")), \
+                patch.object(mc, "default_timeout", short_timeout):
+            reporter._write_final_report = AsyncMock(side_effect=Exception("Test error"))
+
+            result = await reporter.generate_report()
+
+            assert isinstance(result, str)
+            assert "unable" in result.lower() or "error" in result.lower()
+            assert sample_stock_symbol in result
+            assert result.startswith("An unexpected error")
