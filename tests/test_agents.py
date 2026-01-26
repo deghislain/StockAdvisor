@@ -44,43 +44,15 @@ class DummyResponse:
         self.last_message = DummyMessage(text)
 
 
-# ----------------------------------------------------------------------
-@pytest.fixture
-def patched_requirements():
-    """
-    Patch all heavy dependencies used by ``FinAnalystAgent``.
-    Returns a dict with the created mock objects for further inspection.
-    """
-    patches = {
-        "ChatModel": patch("stock_adv_analysis_engine.ChatModel"),
-        "RequirementAgent": patch("src.stock_adv_analysis_engine.RequirementAgent"),
-        "ThinkTool": patch("src.stock_adv_analysis_engine.ThinkTool"),
-        "DataFetcherTool": patch("src.stock_adv_analysis_engine.DataFetcherTool"),
-        "HandoffTool": patch("src.stock_adv_analysis_engine.HandoffTool"),
-        "ConditionalRequirement": patch("src.stock_adv_analysis_engine.ConditionalRequirement"),
-        "GlobalTrajectoryMiddleware": patch(
-            "src.stock_adv_analysis_engine.GlobalTrajectoryMiddleware"
-        ),
-    }
-
-    # Start all patches and collect the mock objects
-    started = {name: p.start() for name, p in patches.items()}
-    yield started
-    # Teardown
-    for p in patches.values():
-        p.stop()
-
-
-# ----------------------------------------------------------------------
 @pytest.mark.skipif(not BEEAI_AVAILABLE, reason="Requires beeai_framework")
 class TestFinAnalystAgent:
     """Test suite for the fundamental‑analysis agent."""
 
     @pytest.mark.asyncio
     async def test_analyze_success(
-        self,
-        sample_stock_symbol: str,
-        patched_requirements: dict,
+            self,
+            sample_stock_symbol: str,
+            patched_fin_agent_requirements: dict,
     ) -> None:
         """Agent returns a formatted analysis string for a valid symbol."""
         # Arrange ---------------------------------------------------------
@@ -88,13 +60,13 @@ class TestFinAnalystAgent:
 
         # Mock the LLM creation
         mock_llm = MagicMock(name="DummyLLM")
-        patched_requirements["ChatModel"].from_name.return_value = mock_llm
+        patched_fin_agent_requirements["ChatModel"].from_name.return_value = mock_llm
 
         # Create a chain of RequirementAgent mocks – the last one is the
         # “main” agent whose ``run`` method we actually care about.
         mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
         main_agent = mock_chain[-1]
-        patched_requirements["RequirementAgent"].side_effect = mock_chain
+        patched_fin_agent_requirements["RequirementAgent"].side_effect = mock_chain
 
         # Capture HandoffTool instances for optional later checks
         handoff_instances = []
@@ -107,7 +79,7 @@ class TestFinAnalystAgent:
             handoff_instances.append(instance)
             return instance
 
-        patched_requirements["HandoffTool"].side_effect = handoff_ctor
+        patched_fin_agent_requirements["HandoffTool"].side_effect = handoff_ctor
 
         # The main agent returns a dummy response
         dummy_resp = DummyResponse(f"Analysis for {sample_stock_symbol}")
@@ -130,21 +102,21 @@ class TestFinAnalystAgent:
 
     @pytest.mark.asyncio
     async def test_analyze_invalid_stock_symbol(
-        self,
-        invalid_stock_symbol: str,
-        patched_requirements: dict,
+            self,
+            invalid_stock_symbol: str,
+            patched_fin_agent_requirements: dict,
     ) -> None:
         """Agent returns an error message when the underlying agent raises."""
         # Arrange ---------------------------------------------------------
         agent = FinAnalystAgent(invalid_stock_symbol)
 
         mock_llm = MagicMock(name="DummyLLM")
-        patched_requirements["ChatModel"].from_name.return_value = mock_llm
+        patched_fin_agent_requirements["ChatModel"].from_name.return_value = mock_llm
 
         # Build the same mock chain as in the success test
         mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
         main_agent = mock_chain[-1]
-        patched_requirements["RequirementAgent"].side_effect = mock_chain
+        patched_fin_agent_requirements["RequirementAgent"].side_effect = mock_chain
 
         # Force the main agent to raise when ``run`` is awaited
         main_agent.run = AsyncMock(side_effect=Exception("Test error"))
@@ -160,17 +132,17 @@ class TestFinAnalystAgent:
         assert "error" in lowered or "unexpected" in lowered
 
     @pytest.mark.asyncio
-    async def test_analyze_empty_response(self, sample_stock_symbol, patched_requirements: dict,):
+    async def test_analyze_empty_response(self, sample_stock_symbol, patched_fin_agent_requirements: dict, ):
         """Test handling of empty response."""
         agent = FinAnalystAgent(sample_stock_symbol)
 
         mock_llm = MagicMock(name="DummyLLM")
-        patched_requirements["ChatModel"].from_name.return_value = mock_llm
+        patched_fin_agent_requirements["ChatModel"].from_name.return_value = mock_llm
 
         # Build the same mock chain as in the success test
         mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
         main_agent = mock_chain[-1]
-        patched_requirements["RequirementAgent"].side_effect = mock_chain
+        patched_fin_agent_requirements["RequirementAgent"].side_effect = mock_chain
 
         main_agent.run = AsyncMock(return_value="")
 
@@ -178,3 +150,46 @@ class TestFinAnalystAgent:
 
         assert result is not None
         assert "unable" in result.lower() or "error" in result.lower()
+
+
+@pytest.mark.skipif(not BEEAI_AVAILABLE, reason="Requires beeai_framework")
+class TestStockRiskAnalyzer:
+    """Test suite for Risk Assessment Agent."""
+
+    @pytest.mark.asyncio
+    async def test_risk_analyze_success(self, sample_stock_symbol, patched_risk_agent_requirements: dict):
+        """Test risk analyzer with valid symbol."""
+        analyzer = StockRiskAnalyzer(sample_stock_symbol)
+
+        # Mock the LLM creation
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_risk_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        # Create a chain of RequirementAgent mocks – the last one is the
+        # “main” agent whose ``run`` method we actually care about.
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_risk_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # Capture HandoffTool instances for optional later checks
+        handoff_instances = []
+
+        def handoff_ctor(target_agent, *, name, description):
+            instance = MagicMock(name=f"Handoff({name})")
+            instance.target_agent = target_agent
+            instance.name = name
+            instance.description = description
+            handoff_instances.append(instance)
+            return instance
+
+        patched_risk_agent_requirements["HandoffTool"].side_effect = handoff_ctor
+
+        # The main agent returns a dummy response
+        dummy_resp = DummyResponse(f"Risk Analysis for {sample_stock_symbol}")
+        main_agent.run = AsyncMock(return_value=dummy_resp)
+
+        result = await analyzer.analyze()
+
+        assert result is not None
+        assert sample_stock_symbol in result
+        assert isinstance(result, str)
