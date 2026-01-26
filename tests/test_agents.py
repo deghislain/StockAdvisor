@@ -217,3 +217,27 @@ class TestStockRiskAnalyzer:
         assert isinstance(result, str)
         lowered = result.lower()
         assert "error" in lowered or "unexpected" in lowered
+
+    @pytest.mark.asyncio
+    async def test_risk_analyze_empty_response(
+            self,
+            sample_stock_symbol,
+            patched_risk_agent_requirements: dict,
+    ):
+        """Test handling of an empty response."""
+        agent = StockRiskAnalyzer(sample_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_risk_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(5)]
+        main_agent = mock_chain[-1]
+        patched_risk_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # Return a DummyResponse with an empty string (matches the real contract)
+        main_agent.run = AsyncMock(return_value=DummyResponse(""))
+
+        result = await agent.analyze()
+
+        assert isinstance(result, str)
+        assert "unable" in result.lower() or "error" in result.lower()
