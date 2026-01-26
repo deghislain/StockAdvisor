@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -19,6 +19,7 @@ try:
     from src.stock_adv_analysis_engine import FinAnalystAgent
     from src.stock_adv_risk_assessment import StockRiskAnalyzer
     from src.stock_adv_market_sentiment import StockMarketSentimentAnalyzer
+    from src.stock_adv_report_generator import ReportGeneratorAgent
 
     BEEAI_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
@@ -318,3 +319,30 @@ class TestStockMarketSentimentAnalyzer:
 
         assert isinstance(result, str)
         assert "unable" in result.lower() or "error" in result.lower()
+
+
+@pytest.mark.skipif(not BEEAI_AVAILABLE, reason="Requires beeai_framework")
+class TestReportGeneratorAgent:
+    """Test suite for final report generation."""
+
+    def _queue_mock(self, reporter, kind, payload):
+        async def _mock():
+            await reporter.report_queue.put((kind, payload))
+
+        return AsyncMock(side_effect=_mock)
+
+    @pytest.mark.asyncio
+    async def test_generate_report_success(self, sample_stock_symbol):
+        reporter = ReportGeneratorAgent(sample_stock_symbol)
+        with patch.object(reporter, "_perform_fundamental_analysis",
+                          new=self._queue_mock(reporter, "fund_analysis", "Fund text")), \
+                patch.object(reporter, "_perform_market_sentiment_analysis",
+                             new=self._queue_mock(reporter, "market_sent_analysis", "Sentiment text")), \
+                patch.object(reporter, "_perform_risk_assessment",
+                             new=self._queue_mock(reporter, "risk_assessment", "Risk text")):
+            reporter._write_final_report = AsyncMock(return_value=f"Final report for {sample_stock_symbol}")
+            result = await reporter.generate_report()
+            assert isinstance(result, str)
+            assert sample_stock_symbol in result
+            assert result.startswith("Final")
+
