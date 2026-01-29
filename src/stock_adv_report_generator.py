@@ -97,6 +97,8 @@ class ReportGeneratorAgent:
 
     async def _write_final_report(self, initial_report: str) -> str:
         logging.info(f"******************************_write_final_report STARTS with input: {initial_report} *******///")
+        if not initial_report:
+            return "Error: Invalid Input, initial_report cannot be empty"
         report_writer = RequirementAgent(
             llm=ChatModel.from_name(mc.small_model, timeout=mc.llm_timeout, stream=False),
             tools=[ThinkTool(), ],
@@ -146,8 +148,7 @@ class ReportGeneratorAgent:
             middlewares=[GlobalTrajectoryMiddleware(included=[Tool])],
         )
         prompt = get_final_report_prompt(initial_report)
-        agent_response = None
-        
+
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
             

@@ -23,5 +23,7 @@ dependencies = [
    "yfinance",
    "pytest",
    "duckduckgo-search >=2.0",
-   "streamlit.testing.script_interactions"
+   "mplfinance",
+   "matplotlib",
+   "pytest-asyncio"
 ]
