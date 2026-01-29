@@ -349,7 +349,6 @@ class TestReportGeneratorAgent:
 
     @pytest.mark.asyncio
     async def test_generate_report_time_out(self, sample_stock_symbol):
-
         reporter = ReportGeneratorAgent(sample_stock_symbol)
         short_timeout = 0.1
         with patch.object(reporter, "_perform_fundamental_analysis",
@@ -367,3 +366,79 @@ class TestReportGeneratorAgent:
             assert "unable" in result.lower() or "error" in result.lower()
             assert sample_stock_symbol in result
             assert result.startswith("An unexpected error")
+
+    @pytest.mark.asyncio
+    async def test_write_final_report_success(self, sample_stock_symbol,
+                                              patched_report_generator_agent_requirements,
+                                              handoff_ctor_fixture):
+        """Test write final report with valid symbol."""
+        report_generator_agent = ReportGeneratorAgent(sample_stock_symbol)
+
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_report_generator_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        # mock chain of RequirementAgent objects
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(4)]
+        main_agent = mock_chain[-1]
+        patched_report_generator_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # inject shared handoff constructor
+        ctor, handoff_instances = handoff_ctor_fixture
+        patched_report_generator_agent_requirements["HandoffTool"].side_effect = ctor
+
+        # main agent returns a dummy response
+        dummy_resp = DummyResponse(f"Final report for {sample_stock_symbol}")
+        main_agent.run = AsyncMock(return_value=dummy_resp)
+
+        result = await report_generator_agent._write_final_report(f"Initial report for {sample_stock_symbol}")
+
+        main_agent.run.assert_awaited_once()
+        assert result is not None
+        assert sample_stock_symbol in result
+        assert result.startswith("Final")
+        assert isinstance(result, str)
+
+    @pytest.mark.asyncio
+    async def test_write_final_report_empty_input(self, sample_stock_symbol,
+                                                  patched_report_generator_agent_requirements,
+                                                  handoff_ctor_fixture) -> None:
+        """Agent returns an error message when empty input."""
+        # --------------------------------------------------- Arrange
+
+        report_generator_agent = ReportGeneratorAgent(sample_stock_symbol)
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_report_generator_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(4)]
+        main_agent = mock_chain[-1]
+        patched_report_generator_agent_requirements["RequirementAgent"].side_effect = mock_chain
+        main_agent.run = AsyncMock(side_effect=Exception("Test error"))
+
+        result = await report_generator_agent._write_final_report("")
+
+        assert isinstance(result, str)
+        lowered = result.lower()
+        assert "error" in lowered or "unexpected" in lowered
+
+    @pytest.mark.asyncio
+    async def test_write_final_report_empty_model_response(self, sample_stock_symbol,
+                                                           patched_report_generator_agent_requirements,
+                                                           handoff_ctor_fixture) -> None:
+        """Agent returns an error message when empty input."""
+        # --------------------------------------------------- Arrange
+
+        report_generator_agent = ReportGeneratorAgent(sample_stock_symbol)
+        mock_llm = MagicMock(name="DummyLLM")
+        patched_report_generator_agent_requirements["ChatModel"].from_name.return_value = mock_llm
+
+        mock_chain = [MagicMock(name=f"Agent{i}") for i in range(4)]
+        main_agent = mock_chain[-1]
+        patched_report_generator_agent_requirements["RequirementAgent"].side_effect = mock_chain
+
+        # Return a DummyResponse with an empty string (matches the real contract)
+        main_agent.run = AsyncMock(return_value=DummyResponse(""))
+
+        result = await report_generator_agent._write_final_report(f"Initial report for {sample_stock_symbol}")
+
+        assert isinstance(result, str)
+        assert "unable" in result.lower() or "error" in result.lower()

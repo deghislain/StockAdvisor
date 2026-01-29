@@ -187,3 +187,31 @@ def patched_sent_agent_requirements():
         yield started
     finally:
         _stop_patches(patches)
+
+
+@pytest.fixture
+def patched_report_generator_agent_requirements():
+    """
+    Patch heavy dependencies of ``ReportGeneratorAgent``.
+    Returns a mapping ``{name: mock}`` for inspection in tests.
+    """
+    patches = {
+        "ChatModel": mock.patch("src.stock_adv_report_generator.ChatModel"),
+        "RequirementAgent": mock.patch(
+            "src.stock_adv_report_generator.RequirementAgent"
+        ),
+        "ThinkTool": mock.patch("src.stock_adv_report_generator.ThinkTool"),
+        "HandoffTool": mock.patch("src.stock_adv_report_generator.HandoffTool"),
+        "ConditionalRequirement": mock.patch(
+            "src.stock_adv_report_generator.ConditionalRequirement"
+        ),
+        "GlobalTrajectoryMiddleware": mock.patch(
+            "src.stock_adv_report_generator.GlobalTrajectoryMiddleware"
+        ),
+    }
+
+    started = _start_patches(patches)
+    try:
+        yield started
+    finally:
+        _stop_patches(patches)
