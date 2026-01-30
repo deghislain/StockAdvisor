@@ -48,17 +48,7 @@ def mock_st(monkeypatch):
     mock_streamlit = mock.MagicMock(name="st")
     monkeypatch.setattr(ui, "st", mock_streamlit)
 
-    # Preserve any existing value of ``current_stock`` and restore it later
-    original_stock = getattr(ui, "current_stock", None)
-    monkeypatch.setattr(ui, "current_stock", "AAPL")
-    try:
-        yield mock_streamlit
-    finally:
-        # Restore the original attribute (or delete if it didn't exist)
-        if original_stock is None:
-            delattr(ui, "current_stock")
-        else:
-            monkeypatch.setattr(ui, "current_stock", original_stock)
+    yield mock_streamlit
 
 
 # ----------------------------------------------------------------------
