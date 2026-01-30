@@ -16,12 +16,15 @@ from beeai_framework.errors import FrameworkError
 import asyncio, logging, time
 from typing import Any
 
-from stock_adv_analysis_engine import FinAnalystAgent
-from stock_adv_market_sentiment import StockMarketSentimentAnalyzer
-from stock_adv_risk_assessment import StockRiskAnalyzer
-from config import ModelConfig as mc
-from stock_adv_report_instructions import REPORT_WRITER_INSTRUCTIONS, REPORT_REVIEWER_INSTRUCTIONS, REPORT_REFINER_INSTRUCTIONS
-from stock_adv_prompts import get_final_report_prompt
+from src.agents.stock_adv_analysis_engine import FinAnalystAgent
+from src.agents.stock_adv_market_sentiment import StockMarketSentimentAnalyzer
+from src.agents.stock_adv_risk_assessment import StockRiskAnalyzer
+from src.config.config import ModelConfig as mc
+from src.config.stock_adv_report_instructions import (
+    REPORT_WRITER_INSTRUCTIONS,
+    REPORT_REVIEWER_INSTRUCTIONS,
+    REPORT_REFINER_INSTRUCTIONS)
+from src.config.stock_adv_prompts import get_final_report_prompt
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

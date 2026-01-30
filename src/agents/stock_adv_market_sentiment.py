@@ -7,20 +7,20 @@ from beeai_framework.agents.requirement import RequirementAgent
 from beeai_framework.agents.requirement.requirements.conditional import ConditionalRequirement
 from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools.think import ThinkTool
-from stock_adv_web_search_tool import WebSearchTool
+from src.tools.stock_adv_web_search_tool import WebSearchTool
 from beeai_framework.backend import ChatModel
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
-#from stock_adv_utils import SMALL_MODEL, FIN_MODEL
-from config import ModelConfig as mc
 
-from stock_adv_market_sent_analysis_instructions import (WEB_SEARCH_INSTRUCTIONS,
+from src.config.config import ModelConfig as mc
+
+from src.config.stock_adv_market_sent_analysis_instructions import (WEB_SEARCH_INSTRUCTIONS,
                                                          MARKET_SENT_ANALYSIS_INSTRUCTIONS,
                                                          MARKET_SENT_ANALYSIS_REVIEW_INSTRUCTIONS,
                                                          MARKET_SENT_ANALYSIS_IMPROVE_INSTRUCTIONS)
 
-from stock_adv_prompts import get_stock_market_sent_analysis_prompt
+from src.config.stock_adv_prompts import get_stock_market_sent_analysis_prompt
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')

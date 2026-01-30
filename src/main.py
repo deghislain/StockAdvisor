@@ -3,7 +3,7 @@ from datetime import datetime
 import traceback
 import streamlit as st
 
-from stock_adv_user_interface import create_interface
+from src.ui.stock_adv_user_interface import create_interface
 from beeai_framework.errors import FrameworkError
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')

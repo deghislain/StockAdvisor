@@ -4,7 +4,7 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-import src.stock_adv_user_interface as user_interface
+import src.ui.stock_adv_user_interface as user_interface
 
 
 def test_get_user_input_valid_stock_symbol(mock_st, sample_stock_symbol):

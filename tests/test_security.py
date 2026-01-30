@@ -4,7 +4,7 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-import src.stock_adv_security as security
+import src.agents.stock_adv_security as security
 
 
 def test_validate_stock_symbol_correct_stock_symbol(sample_stock_symbol):

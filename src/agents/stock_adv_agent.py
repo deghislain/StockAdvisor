@@ -1,4 +1,4 @@
-from stock_adv_recommendation_agent import call_recommendation_agent
+from src.agents.stock_adv_recommendation_agent import call_recommendation_agent
 import asyncio
 import logging
 

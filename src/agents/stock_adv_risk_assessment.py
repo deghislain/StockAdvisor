@@ -17,13 +17,13 @@ from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.tools.think import ThinkTool
 
-#from stock_adv_utils import FIN_MODEL
-from config import ModelConfig as mc
-from stock_adv_risk_assesment_tool import StockRiskAnalysisTool
-from stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
+
+from src.config.config import ModelConfig as mc
+from src.tools.stock_adv_risk_assesment_tool import StockRiskAnalysisTool
+from src.config.stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
                                          RISK_ASSESSMENT_REVIEW_INSTRUCTIONS,
                                          RISK_ASSESSMENT_IMPROVE_INSTRUCTIONS)
-from stock_adv_prompts import get_stock_risk_assessment_prompt
+from src.config.stock_adv_prompts import get_stock_risk_assessment_prompt
 
 import logging
 

@@ -3,7 +3,6 @@
     It evaluates key metrics such as price trends, volume, earnings reports, and other relevant indicators.
 """
 import logging
-from langchain_ollama import ChatOllama
 from beeai_framework.agents.requirement import RequirementAgent
 from beeai_framework.agents.requirement.requirements.conditional import ConditionalRequirement
 from beeai_framework.backend import ChatModel
@@ -11,15 +10,16 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.middleware.trajectory import GlobalTrajectoryMiddleware
 from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
-#from stock_adv_utils import SMALL_MODEL, FIN_MODEL
-from config import ModelConfig as mc
 from beeai_framework.tools.think import ThinkTool
-from stock_adv_data_fetcher_tool import DataFetcherTool
-from stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
-                                             FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
-                                             FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
 
-from stock_adv_prompts import get_stock_analysis_prompt
+
+from src.config.config import ModelConfig as mc
+from src.tools.stock_adv_data_fetcher_tool import DataFetcherTool
+from src.config.stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
+                                                        FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
+                                                        FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
+
+from src.config.stock_adv_prompts import get_stock_analysis_prompt
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -128,14 +128,14 @@ class FinAnalystAgent:
         prompt = get_stock_analysis_prompt(self.ticker_symbol)
         logging.info(f"Starting fundamental analysis for: {self.ticker_symbol}")
         agent_response = None
-        
+
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            
+
             # Safely extract the response
             if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
                 fund_analys_report = response.last_message.text
-                
+
                 if fund_analys_report:
                     agent_response = fund_analys_report
                     logging.info(f"Fundamental analysis completed successfully for {self.ticker_symbol}")
@@ -145,20 +145,20 @@ class FinAnalystAgent:
             else:
                 logging.error("Unexpected response structure from fundamental analysis agent")
                 agent_response = f"Technical error occurred during fundamental analysis for {self.ticker_symbol}."
-                
+
         except FrameworkError as err:
             error_msg = f"Framework error in fundamental analysis: {err.explain()}"
             logging.error(error_msg, exc_info=True)
             agent_response = f"Analysis framework error for {self.ticker_symbol}. Please try again later."
-            
+
         except AttributeError as err:
             logging.error(f"Response structure error in fundamental analysis: {err}", exc_info=True)
             agent_response = f"Data structure error during analysis of {self.ticker_symbol}."
-            
+
         except Exception as err:
             logging.error(f"Unexpected error in fundamental analysis for {self.ticker_symbol}: {err}", exc_info=True)
             agent_response = f"Unexpected error occurred during fundamental analysis of {self.ticker_symbol}."
-            
+
         return agent_response
 
     async def analyze(self, ) -> str:

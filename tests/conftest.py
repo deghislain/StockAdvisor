@@ -42,7 +42,7 @@ def mock_st(monkeypatch):
     set a default ``current_stock`` attribute on the UI module.
     """
     # Import the UI module *after* the stub is in place (if needed)
-    import src.stock_adv_user_interface as ui
+    import src.ui.stock_adv_user_interface as ui
 
     # Replace the Streamlit object with a MagicMock
     mock_streamlit = mock.MagicMock(name="st")
@@ -92,20 +92,20 @@ def patched_fin_agent_requirements():
     Returns a mapping ``{name: mock}`` for inspection in tests.
     """
     patches = {
-        "ChatModel": mock.patch("src.stock_adv_analysis_engine.ChatModel"),
+        "ChatModel": mock.patch("src.agents.stock_adv_analysis_engine.ChatModel"),
         "RequirementAgent": mock.patch(
-            "src.stock_adv_analysis_engine.RequirementAgent"
+            "src.agents.stock_adv_analysis_engine.RequirementAgent"
         ),
-        "ThinkTool": mock.patch("src.stock_adv_analysis_engine.ThinkTool"),
+        "ThinkTool": mock.patch("src.agents.stock_adv_analysis_engine.ThinkTool"),
         "DataFetcherTool": mock.patch(
-            "src.stock_adv_analysis_engine.DataFetcherTool"
+            "src.agents.stock_adv_analysis_engine.DataFetcherTool"
         ),
-        "HandoffTool": mock.patch("src.stock_adv_analysis_engine.HandoffTool"),
+        "HandoffTool": mock.patch("src.agents.stock_adv_analysis_engine.HandoffTool"),
         "ConditionalRequirement": mock.patch(
-            "src.stock_adv_analysis_engine.ConditionalRequirement"
+            "src.agents.stock_adv_analysis_engine.ConditionalRequirement"
         ),
         "GlobalTrajectoryMiddleware": mock.patch(
-            "src.stock_adv_analysis_engine.GlobalTrajectoryMiddleware"
+            "src.agents.stock_adv_analysis_engine.GlobalTrajectoryMiddleware"
         ),
     }
 
@@ -124,20 +124,20 @@ def patched_risk_agent_requirements():
     Returns a mapping ``{name: mock}`` for inspection in tests.
     """
     patches = {
-        "ChatModel": mock.patch("src.stock_adv_risk_assessment.ChatModel"),
+        "ChatModel": mock.patch("src.agents.stock_adv_risk_assessment.ChatModel"),
         "RequirementAgent": mock.patch(
-            "src.stock_adv_risk_assessment.RequirementAgent"
+            "src.agents.stock_adv_risk_assessment.RequirementAgent"
         ),
-        "ThinkTool": mock.patch("src.stock_adv_risk_assessment.ThinkTool"),
+        "ThinkTool": mock.patch("src.agents.stock_adv_risk_assessment.ThinkTool"),
         "StockRiskAnalysisTool": mock.patch(
-            "src.stock_adv_risk_assessment.StockRiskAnalysisTool"
+            "src.agents.stock_adv_risk_assessment.StockRiskAnalysisTool"
         ),
-        "HandoffTool": mock.patch("src.stock_adv_risk_assessment.HandoffTool"),
+        "HandoffTool": mock.patch("src.agents.stock_adv_risk_assessment.HandoffTool"),
         "ConditionalRequirement": mock.patch(
-            "src.stock_adv_risk_assessment.ConditionalRequirement"
+            "src.agents.stock_adv_risk_assessment.ConditionalRequirement"
         ),
         "GlobalTrajectoryMiddleware": mock.patch(
-            "src.stock_adv_risk_assessment.GlobalTrajectoryMiddleware"
+            "src.agents.stock_adv_risk_assessment.GlobalTrajectoryMiddleware"
         ),
     }
 
@@ -155,20 +155,20 @@ def patched_sent_agent_requirements():
     Returns a mapping ``{name: mock}`` for inspection in tests.
     """
     patches = {
-        "ChatModel": mock.patch("src.stock_adv_market_sentiment.ChatModel"),
+        "ChatModel": mock.patch("src.agents.stock_adv_market_sentiment.ChatModel"),
         "RequirementAgent": mock.patch(
-            "src.stock_adv_market_sentiment.RequirementAgent"
+            "src.agents.stock_adv_market_sentiment.RequirementAgent"
         ),
-        "ThinkTool": mock.patch("src.stock_adv_market_sentiment.ThinkTool"),
+        "ThinkTool": mock.patch("src.agents.stock_adv_market_sentiment.ThinkTool"),
         "StockRiskAnalysisTool": mock.patch(
-            "src.stock_adv_market_sentiment.WebSearchTool"
+            "src.agents.stock_adv_market_sentiment.WebSearchTool"
         ),
-        "HandoffTool": mock.patch("src.stock_adv_market_sentiment.HandoffTool"),
+        "HandoffTool": mock.patch("src.agents.stock_adv_market_sentiment.HandoffTool"),
         "ConditionalRequirement": mock.patch(
-            "src.stock_adv_market_sentiment.ConditionalRequirement"
+            "src.agents.stock_adv_market_sentiment.ConditionalRequirement"
         ),
         "GlobalTrajectoryMiddleware": mock.patch(
-            "src.stock_adv_market_sentiment.GlobalTrajectoryMiddleware"
+            "src.agents.stock_adv_market_sentiment.GlobalTrajectoryMiddleware"
         ),
     }
 
@@ -186,17 +186,17 @@ def patched_report_generator_agent_requirements():
     Returns a mapping ``{name: mock}`` for inspection in tests.
     """
     patches = {
-        "ChatModel": mock.patch("src.stock_adv_report_generator.ChatModel"),
+        "ChatModel": mock.patch("src.agents.stock_adv_report_generator.ChatModel"),
         "RequirementAgent": mock.patch(
-            "src.stock_adv_report_generator.RequirementAgent"
+            "src.agents.stock_adv_report_generator.RequirementAgent"
         ),
-        "ThinkTool": mock.patch("src.stock_adv_report_generator.ThinkTool"),
-        "HandoffTool": mock.patch("src.stock_adv_report_generator.HandoffTool"),
+        "ThinkTool": mock.patch("src.agents.stock_adv_report_generator.ThinkTool"),
+        "HandoffTool": mock.patch("src.agents.stock_adv_report_generator.HandoffTool"),
         "ConditionalRequirement": mock.patch(
-            "src.stock_adv_report_generator.ConditionalRequirement"
+            "src.agents.stock_adv_report_generator.ConditionalRequirement"
         ),
         "GlobalTrajectoryMiddleware": mock.patch(
-            "src.stock_adv_report_generator.GlobalTrajectoryMiddleware"
+            "src.agents.stock_adv_report_generator.GlobalTrajectoryMiddleware"
         ),
     }
 

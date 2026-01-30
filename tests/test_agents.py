@@ -16,11 +16,12 @@ sys.path.insert(0, str(src_path))
 # Optional import guard – tests are skipped if the framework is missing
 try:
     import beeai_framework  # noqa: F401
-    from src.stock_adv_analysis_engine import FinAnalystAgent
-    from src.stock_adv_risk_assessment import StockRiskAnalyzer
-    from src.stock_adv_market_sentiment import StockMarketSentimentAnalyzer
-    from src.stock_adv_report_generator import ReportGeneratorAgent
-    from src.config import ModelConfig as mc
+    from src.agents.stock_adv_analysis_engine import FinAnalystAgent
+    from src.config.config import ModelConfig as mc
+    from src.agents.stock_adv_risk_assessment import StockRiskAnalyzer
+    from src.agents.stock_adv_market_sentiment import StockMarketSentimentAnalyzer
+    from src.agents.stock_adv_report_generator import ReportGeneratorAgent
+
 
     BEEAI_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
