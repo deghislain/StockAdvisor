@@ -8,8 +8,8 @@ from io import StringIO
 
 import logging
 
-from src.tools.stock_adv_web_scraping import ContentExtractor
-from src.tools.stock_adv_web_search import NewsSearcher
+from tools.stock_adv_web_scraping import ContentExtractor
+from tools.stock_adv_web_search import NewsSearcher
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

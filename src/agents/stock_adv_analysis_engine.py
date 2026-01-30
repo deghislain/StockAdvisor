@@ -13,13 +13,13 @@ from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.tools.think import ThinkTool
 
 
-from src.config.config import ModelConfig as mc
-from src.tools.stock_adv_data_fetcher_tool import DataFetcherTool
-from src.config.stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
+from config.config import ModelConfig as mc
+from tools.stock_adv_data_fetcher_tool import DataFetcherTool
+from config.stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
                                                         FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
                                                         FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
 
-from src.config.stock_adv_prompts import get_stock_analysis_prompt
+from config.stock_adv_prompts import get_stock_analysis_prompt
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

@@ -6,10 +6,10 @@ import streamlit as st
 import logging
 from typing import Dict, Any
 
-from src.agents.stock_adv_agent import get_recommendation_agent_response
-from src.agents.stock_adv_report_generator import ReportGeneratorAgent
-from src.ui.stock_adv_technical_analysis import perform_tech_analysis
-from src.agents.stock_adv_security import (
+from agents.stock_adv_agent import get_recommendation_agent_response
+from agents.stock_adv_report_generator import ReportGeneratorAgent
+from ui.stock_adv_technical_analysis import perform_tech_analysis
+from agents.stock_adv_security import (
     validate_stock_symbol,
     sanitize_input,
     report_rate_limiter,
