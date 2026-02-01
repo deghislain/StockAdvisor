@@ -12,14 +12,14 @@ from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.tools.think import ThinkTool
 
-
 from config.config import ModelConfig as mc
 from tools.stock_adv_data_fetcher_tool import DataFetcherTool
 from config.stock_adv_analysis_instructions import (FUNDAMENTAL_ANALYSIS_INSTRUCTIONS,
-                                                        FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
-                                                        FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
+                                                    FUNDAMENTAL_ANALYSIS_REVIEW_INSTRUCTION,
+                                                    FUNDAMENTAL_ANALYSIS_IMPROVE_INSTRUCTION)
 
 from config.stock_adv_prompts import get_stock_analysis_prompt
+from utils.logging_helper import log_performance
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -161,6 +161,7 @@ class FinAnalystAgent:
 
         return agent_response
 
+    @log_performance
     async def analyze(self, ) -> str:
         fundamental_analysis = await self._perform_fundamental_analysis()
         return fundamental_analysis

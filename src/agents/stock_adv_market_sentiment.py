@@ -12,16 +12,16 @@ from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 
-
 from tools.stock_adv_web_search_tool import WebSearchTool
 from config.config import ModelConfig as mc
 
 from config.stock_adv_market_sent_analysis_instructions import (WEB_SEARCH_INSTRUCTIONS,
-                                                         MARKET_SENT_ANALYSIS_INSTRUCTIONS,
-                                                         MARKET_SENT_ANALYSIS_REVIEW_INSTRUCTIONS,
-                                                         MARKET_SENT_ANALYSIS_IMPROVE_INSTRUCTIONS)
+                                                                MARKET_SENT_ANALYSIS_INSTRUCTIONS,
+                                                                MARKET_SENT_ANALYSIS_REVIEW_INSTRUCTIONS,
+                                                                MARKET_SENT_ANALYSIS_IMPROVE_INSTRUCTIONS)
 
 from config.stock_adv_prompts import get_stock_market_sent_analysis_prompt
+from utils.logging_helper import log_performance
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -121,14 +121,14 @@ class StockMarketSentimentAnalyzer:
         prompt = get_stock_market_sent_analysis_prompt(self.ticker_symbol)
         logging.info(f"Starting market sentiment analysis for: {self.ticker_symbol}")
         agent_response = None
-        
+
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            
+
             # Safely extract the response
             if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
                 risk_market_sent_report = response.last_message.text
-                
+
                 if risk_market_sent_report:
                     agent_response = risk_market_sent_report
                     logging.info(f"Market sentiment analysis completed successfully for {self.ticker_symbol}")
@@ -138,22 +138,24 @@ class StockMarketSentimentAnalyzer:
             else:
                 logging.error("Unexpected response structure from market sentiment agent")
                 agent_response = f"Technical error occurred during market sentiment analysis for {self.ticker_symbol}."
-                
+
         except FrameworkError as err:
             error_msg = f"Framework error in market sentiment analysis: {err.explain()}"
             logging.error(error_msg, exc_info=True)
             agent_response = f"Analysis framework error for {self.ticker_symbol}. Please try again later."
-            
+
         except AttributeError as err:
             logging.error(f"Response structure error in market sentiment analysis: {err}", exc_info=True)
             agent_response = f"Data structure error during market sentiment analysis of {self.ticker_symbol}."
-            
+
         except Exception as err:
-            logging.error(f"Unexpected error in market sentiment analysis for {self.ticker_symbol}: {err}", exc_info=True)
+            logging.error(f"Unexpected error in market sentiment analysis for {self.ticker_symbol}: {err}",
+                          exc_info=True)
             agent_response = f"Unexpected error occurred during market sentiment analysis of {self.ticker_symbol}."
-            
+
         return agent_response
 
+    @log_performance
     async def analyze(self):
         return await self._perform_market_sentiment_analysis()
 

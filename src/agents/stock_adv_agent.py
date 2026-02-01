@@ -1,10 +1,12 @@
 from agents.stock_adv_recommendation_agent import call_recommendation_agent
+from utils.logging_helper import log_performance
 import asyncio
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+@log_performance
 async def get_recommendation_agent_response(user_question: str, timeout: int = 180):
     """
     Get a response from the recommendation agent with proper error handling.

@@ -17,13 +17,13 @@ from beeai_framework.tools import Tool
 from beeai_framework.tools.handoff import HandoffTool
 from beeai_framework.tools.think import ThinkTool
 
-
 from config.config import ModelConfig as mc
 from tools.stock_adv_risk_assesment_tool import StockRiskAnalysisTool
 from config.stock_adv_risk_instructions import (RISK_ASSESSMENT_INSTRUCTIONS,
-                                         RISK_ASSESSMENT_REVIEW_INSTRUCTIONS,
-                                         RISK_ASSESSMENT_IMPROVE_INSTRUCTIONS)
+                                                RISK_ASSESSMENT_REVIEW_INSTRUCTIONS,
+                                                RISK_ASSESSMENT_IMPROVE_INSTRUCTIONS)
 from config.stock_adv_prompts import get_stock_risk_assessment_prompt
+from utils.logging_helper import log_performance
 
 import logging
 
@@ -100,14 +100,14 @@ class StockRiskAnalyzer:
         prompt = get_stock_risk_assessment_prompt(self.ticker_symbol)
         logging.info(f"Starting risk assessment for: {self.ticker_symbol}")
         agent_response = None
-        
+
         try:
             response = await main_agent.run(prompt, expected_output="Helpful and clear response.")
-            
+
             # Safely extract the response
             if response and hasattr(response, 'last_message') and hasattr(response.last_message, 'text'):
                 risk_analysis_report = response.last_message.text
-                
+
                 if risk_analysis_report:
                     agent_response = risk_analysis_report
                     logging.info(f"Risk assessment completed successfully for {self.ticker_symbol}")
@@ -117,22 +117,23 @@ class StockRiskAnalyzer:
             else:
                 logging.error("Unexpected response structure from risk assessment agent")
                 agent_response = f"Technical error occurred during risk assessment for {self.ticker_symbol}."
-                
+
         except FrameworkError as err:
             error_msg = f"Framework error in risk assessment: {err.explain()}"
             logging.error(error_msg, exc_info=True)
             agent_response = f"Analysis framework error for {self.ticker_symbol}. Please try again later."
-            
+
         except AttributeError as err:
             logging.error(f"Response structure error in risk assessment: {err}", exc_info=True)
             agent_response = f"Data structure error during risk assessment of {self.ticker_symbol}."
-            
+
         except Exception as err:
             logging.error(f"Unexpected error in risk assessment for {self.ticker_symbol}: {err}", exc_info=True)
             agent_response = f"Unexpected error occurred during risk assessment of {self.ticker_symbol}."
 
         return agent_response
 
+    @log_performance
     async def analyze(self):
         report = await self._perform_risk_analysis()
         if report:
