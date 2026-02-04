@@ -33,25 +33,16 @@ def create_message(role: str, content: str) -> Dict[str, str]:
     return {"role": role, "content": content}
 
 
-def display_chat_history() -> None:
-    """
-    Displays chat history alternately between user and assistant messages in a Streamlit app.
-
-    Returns:
-        None
-    """
+def display_chat_history():
+    """ Displays chat history alternately between user and assistant messages in a Streamlit app.."""
     if 'chat_history' in st.session_state:
-        chat_history = st.session_state['chat_history']
-        count = 0
-        for m in chat_history:
-            if m != "":
-                if count % 2 == 0:
-                    output = st.chat_message("user")
-                    output.write(m)
-                else:
-                    output = st.chat_message("assistant")
-                    output.write(m)
-            count += 1
+        for i, message in enumerate(st.session_state['chat_history']):
+            if i % 2 == 0:
+                with st.chat_message("user"):
+                    st.markdown(message)
+            else:
+                with st.chat_message("assistant"):
+                    st.markdown(message)
 
 
 def update_chat_history(input: Any, result: Any) -> None:

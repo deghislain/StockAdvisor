@@ -3,7 +3,7 @@ from pandas import DataFrame, Series
 import yfinance as yf
 from pydantic import BaseModel, Field, ConfigDict
 import streamlit as st
-from typing import Optional
+from typing import Any
 from beeai_framework.emitter import Emitter
 from beeai_framework.tools import Tool, ToolRunOptions
 from beeai_framework.context import RunContext
@@ -21,15 +21,32 @@ class DataFetcherToolInput(BaseModel):
 
 
 class DataFetcherToolResult(SearchToolResult):
-    title: str
-    description: str
-    url: str
-    income_statement: Optional[DataFrame] = None
-    balance_sheet: Optional[DataFrame] = None
-    cash_flow: Optional[DataFrame] = None
-    additional_info: Optional[Series] = None
-    financial_news: Optional[str] = None
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    def __init__(self, title, description, url, income_statement, balance_sheet, cash_flow, additional_info,
+                 financial_news, /, **data: Any):
+        super().__init__(**data)
+        self.title = title
+        self.description = description
+        self.url = url
+        self.income_statement = income_statement
+        self.balance_sheet = balance_sheet
+        self.cash_flow = cash_flow
+        self.additional_info = additional_info
+        self.financial_news = financial_news
+
+    def __getstate__(self):
+        # Prepare a picklable state
+        state = self.__dict__.copy()
+
+        # Convert pandas DataFrames to dict if they exist
+        for key in ['income_statement', 'balance_sheet', 'cash_flow']:
+            if hasattr(state[key], 'to_dict'):
+                state[key] = state[key].to_dict()
+
+        return state
+
+    def __setstate__(self, state):
+        # Reconstruct the object
+        self.__dict__.update(state)
 
 
 class DataFetcherToolOutput(SearchToolOutput):
@@ -49,7 +66,7 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
         )
 
     @st.cache_data
-    def get_fundamental_data(input: DataFetcherToolInput) -> DataFetcherToolResult:
+    def get_fundamental_data(self, input: DataFetcherToolInput) -> DataFetcherToolResult:
         logging.info(f"_get_fundamental_data START with input {input}")
         # TODO For now, this is a workaround for when the model fails to get the right input
         current_input = input.stock_symbol
