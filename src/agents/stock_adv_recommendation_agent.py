@@ -15,13 +15,13 @@ from beeai_framework.errors import FrameworkError
 from beeai_framework.tools import Tool
 #from stock_adv_utils import SMALL_MODEL, LARGE_MODEL
 from config.config import ModelConfig as mc
-
+from utils.logging_helper import log_performance
 from config.stock_adv_market_sent_analysis_instructions import WEB_SEARCH_INSTRUCTIONS
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
+@log_performance
 async def call_recommendation_agent(user_query: str):
     """
         Asynchronously generates a buy/sell/hold recommendation based on user query.

@@ -25,7 +25,8 @@ from config.stock_adv_report_instructions import (
     REPORT_REVIEWER_INSTRUCTIONS,
     REPORT_REFINER_INSTRUCTIONS)
 from config.stock_adv_prompts import get_final_report_prompt
-from ui.progression_bar import update_progression_bar
+from ui.progression_bar import ProgressionBar
+from utils.logging_helper import log_performance
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -42,6 +43,7 @@ class ReportGeneratorAgent:
         self.generated_report = None
         self.report_queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
         self.progression = 0
+        self.pb = ProgressionBar()
 
     async def _perform_fundamental_analysis(self, ):
         logging.info(f"[FUNDAMENTAL] Starting analysis for {self.stock_symbol}")
@@ -99,9 +101,10 @@ class ReportGeneratorAgent:
             duration = time.time() - start_time
             logging.error(f"[RISK] Failed after {duration:.2f}s for {self.stock_symbol}: {e}", exc_info=True)
             await self.report_queue.put(("risk_assessment", f"Risk assessment error: {str(e)}"))
-
+    @log_performance
     async def _write_final_report(self, initial_report: str) -> str:
         logging.info(f"******************************_write_final_report STARTS with input: {initial_report} *******///")
+        self.pb.update_progression_bar(self.progression, "final")
         if not initial_report:
             return "Error: Invalid Input, initial_report cannot be empty"
         report_writer = RequirementAgent(
@@ -187,6 +190,7 @@ class ReportGeneratorAgent:
         logging.info(f"_write_final_report completed with result: {bool(agent_response)}")
         return agent_response
 
+    @log_performance
     async def generate_report(self, ):
         """
         Generate a comprehensive stock report by running all analyses concurrently.
@@ -215,7 +219,7 @@ class ReportGeneratorAgent:
                     logging.info(f"[QUEUE] Received result {i+1}/3: {kind}")
                     if kind and payload:
                         self.progression += 25
-                        update_progression_bar(self.progression, kind)
+                        self.pb.update_progression_bar(self.progression, kind)
 
                     results[kind] = payload
                 except asyncio.TimeoutError:
@@ -233,9 +237,7 @@ class ReportGeneratorAgent:
             if missing_keys:
                 logging.error(f"Missing analysis results: {missing_keys}")
                 return f"Incomplete analysis for {self.stock_symbol}. Missing: {', '.join(missing_keys)}"
-            else:
-                update_progression_bar(self.progression, "final")
-            
+
             # Combine all analyses
             separator = "\n\n\n"
             initial_report = separator.join([

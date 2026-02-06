@@ -10,6 +10,7 @@ from beeai_framework.context import RunContext
 from beeai_framework.tools.search import SearchToolOutput, SearchToolResult
 import asyncio
 import logging
+from utils.logging_helper import log_performance
 
 from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
 
@@ -65,6 +66,7 @@ class DataFetcherTool(Tool[DataFetcherToolInput, ToolRunOptions, DataFetcherTool
             creator=self,
         )
 
+    @log_performance
     @st.cache_data
     def get_fundamental_data(self, input: DataFetcherToolInput) -> DataFetcherToolResult:
         logging.info(f"_get_fundamental_data START with input {input}")
